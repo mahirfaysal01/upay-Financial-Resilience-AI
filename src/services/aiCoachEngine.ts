@@ -206,6 +206,23 @@ Your current balance of ৳${ctx.currentBalance.toLocaleString()} comfortably co
 3. You will preserve enough buffer to comfortably clear your upcoming bills without overdraft stress.`;
   }
 
+  if (q.includes('save') || q.includes('সঞ্চয়') || q.includes('জমানো') || q.includes('target') || q.includes('goal')) {
+    const amountMatch = q.match(/(\d+)/);
+    const targetAmt = amountMatch ? parseInt(amountMatch[1], 10) : 1000;
+    const days = ctx.daysUntilNextIncome > 0 ? ctx.daysUntilNextIncome : 15;
+    const dailyTarget = Math.ceil(targetAmt / days);
+
+    return lang === 'bn'
+      ? `৳${targetAmt.toLocaleString()} সঞ্চয় করার বাস্তবসম্মত পরিকল্পনা:
+• দৈনিক সঞ্চয়ের লক্ষ্য: আগামী ${days} দিন প্রতিদিন মাত্র ৳${dailyTarget.toLocaleString()} করে আলাদা রাখুন। খাবার বা অপ্রয়োজনীয় নাস্তার খরচ থেকে এটি সহজেই বাঁচানো সম্ভব।
+• ক্যাশব্যাক জমা রাখুন: উপায়ের মাধ্যমে ইউটিলিটি বিল বা মোবাইল রিচার্জ দিয়ে পাওয়া ক্যাশব্যাক খরচ না করে জমান।
+• ক্যাশ-আউট চার্জ কমান: নগদ টাকা তোলার বদলে দোকানে সরাসরি উপায় কিউআর দিয়ে পেমেন্ট করুন।`
+      : `Actionable plan to save ৳${targetAmt.toLocaleString()}:
+• Daily Micro-Save: Set aside ~৳${dailyTarget.toLocaleString()}/day across the remaining ${days} days until your next income. Trimming casual snacks or one delivery easily covers this.
+• Bank upay Cashbacks: Pay utility bills or mobile recharges via upay and funnel all earned cashbacks directly into this savings buffer.
+• Save on Cash-Out: Make merchant payments with upay QR instead of withdrawing cash to eliminate cash-out fees.`;
+  }
+
   // General helpful response
   return lang === 'bn'
     ? `আপনার বর্তমান ওয়ালেটের চিত্র:

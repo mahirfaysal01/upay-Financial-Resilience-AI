@@ -38,7 +38,7 @@ async function generateGeminiContentWithFallback(prompt: string, systemInstructi
     throw new Error('Gemini API key is not configured');
   }
 
-  const modelCandidates = ['gemini-3.8-flash', 'gemini-3.1-flash-lite'];
+  const modelCandidates = ['gemini-3.1-flash-lite', 'gemini-3.8-flash'];
   let lastError: any = null;
 
   for (const model of modelCandidates) {
@@ -48,11 +48,18 @@ async function generateGeminiContentWithFallback(prompt: string, systemInstructi
         config.systemInstruction = systemInstruction;
       }
 
-      const response = await ai.models.generateContent({
+      // Add a 12s timeout so slow or retrying 503 requests fail over swiftly
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Timeout with model ${model}`)), 12000)
+      );
+
+      const generatePromise = ai.models.generateContent({
         model,
         contents: prompt,
         config: Object.keys(config).length > 0 ? config : undefined,
       });
+
+      const response = await Promise.race([generatePromise, timeoutPromise]);
 
       if (response && response.text) {
         return {
