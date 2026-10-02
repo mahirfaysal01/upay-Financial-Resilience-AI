@@ -19,7 +19,7 @@ export const AppLayout: React.FC = () => {
   const { lang, setIsResponsibleModalOpen, setIsHowItWorksOpen } = useFinancial();
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)] flex flex-col font-sans">
+    <div className={`min-h-screen bg-[var(--bg)] text-[var(--ink)] flex flex-col ${lang === 'bn' ? 'lang-bn' : 'lang-en'}`}>
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -60,22 +60,22 @@ export const AppLayout: React.FC = () => {
               onClick={() => setIsResponsibleModalOpen(true)}
               className="hover:text-[var(--navy)] transition-colors cursor-pointer"
             >
-              দায়িত্বশীল এআই সনদ
+              {lang === 'bn' ? 'দায়িত্বশীল এআই সনদ' : 'Responsible AI Charter'}
             </button>
             <span>·</span>
             <button
               onClick={() => setIsHowItWorksOpen(true)}
               className="hover:text-[var(--navy)] transition-colors cursor-pointer"
             >
-              কীভাবে কাজ করে
+              {lang === 'bn' ? 'কীভাবে কাজ করে' : 'How it Works'}
             </button>
             <span>·</span>
             <Link to="/simulator" className="hover:text-[var(--navy)] transition-colors">
-              সিমুলেটর
+              {lang === 'bn' ? 'সিমুলেটর' : 'Simulator'}
             </Link>
             <span>·</span>
             <span className="text-[12px] text-[var(--muted)]/80">
-              © ২০২৬ উপায় (UCB Fintech Company Limited)
+              {lang === 'bn' ? '© ২০২৬ উপায় (ইউসিবি ফিনটেক কোম্পানি লিমিটেড)' : '© 2026 upay (UCB Fintech Company Limited)'}
             </span>
           </div>
         </div>

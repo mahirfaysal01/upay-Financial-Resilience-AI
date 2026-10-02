@@ -28,25 +28,27 @@ export const Navbar: React.FC = () => {
     lang,
     setLang,
     t,
+    isFirebaseConnected,
+    firebaseProjectId,
   } = useFinancial();
 
   const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
   const location = useLocation();
 
   const navLinks = [
-    { to: '/', label: 'ড্যাশবোর্ড', icon: TrendingUp },
-    { to: '/spending', label: 'খরচের বিশ্লেষণ', icon: PieChart },
-    { to: '/forecast', label: 'ক্যাশ-ফ্লো পূর্বাভাস', icon: Calendar },
+    { to: '/', label: t.nav.dashboard, icon: TrendingUp },
+    { to: '/spending', label: t.nav.spending, icon: PieChart },
+    { to: '/forecast', label: t.nav.forecast, icon: Calendar },
     {
       to: '/risk',
-      label: 'আর্থিক ঝুঁকি',
+      label: t.nav.risk,
       icon: AlertTriangle,
-      badge: risk.riskLevel === 'HIGH' ? '৮২%' : undefined,
+      badge: risk.riskLevel === 'HIGH' ? (lang === 'bn' ? '৮২%' : '82%') : undefined,
     },
-    { to: '/simulator', label: 'হোয়াট-ইফ সিমুলেটর', icon: Sliders },
-    { to: '/goals', label: 'সঞ্চয় লক্ষ্য', icon: Target },
-    { to: '/coach', label: 'এআই পরামর্শক', icon: Bot },
-    { to: '/profile', label: 'প্রোফাইল', icon: User },
+    { to: '/simulator', label: t.nav.simulator, icon: Sliders },
+    { to: '/goals', label: t.nav.goals, icon: Target },
+    { to: '/coach', label: t.nav.coach, icon: Bot },
+    { to: '/profile', label: t.nav.profile, icon: User },
   ];
 
   const customerNamesBn: Record<string, { name: string; profile: string }> = {
@@ -59,7 +61,9 @@ export const Navbar: React.FC = () => {
     C007: { name: 'মেহেদী জামান', profile: 'ক্যাশ-আউট নির্ভর ব্যবসায়ী' },
   };
 
-  const displayName = customerNamesBn[customer.customer_id]?.name || customer.name;
+  const displayName = lang === 'bn'
+    ? (customerNamesBn[customer.customer_id]?.name || customer.name)
+    : customer.name;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[var(--card)] border-b border-[var(--line)] shadow-[0_1px_3px_rgba(11,31,75,0.03)]">
@@ -88,19 +92,28 @@ export const Navbar: React.FC = () => {
                 />
               </div>
               <span className="hidden xs:inline-flex items-center px-2.5 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] font-bold text-[12px] border border-[var(--yellow)]/30 tracking-tight">
-                রেজিলিয়েন্স এআই
+                {lang === 'bn' ? 'রেজিলিয়েন্স এআই' : 'Resilience AI'}
               </span>
             </NavLink>
           </div>
 
           {/* Right: Persona Switcher, Lang Toggle, Bell & Modals */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Real-time Firebase Cloud Connection Indicator */}
+            <div
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[11px] font-semibold tracking-tight shadow-2xs"
+              title={lang === 'bn' ? `রিয়েল-টাইম ফায়ারবেস ক্লাউড সংযুক্ত (${firebaseProjectId})` : `Real-time Firebase Cloud Connected (${firebaseProjectId})`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isFirebaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+              <span>{lang === 'bn' ? 'ফায়ারবেস লাইভ' : 'Firebase Live'}</span>
+            </div>
+
             {/* Customer Switcher */}
             <div className="relative">
               <button
                 onClick={() => setCustomerDropdownOpen(!customerDropdownOpen)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] hover:border-[var(--navy)]/30 text-[var(--navy)] text-[13px] font-semibold transition-all cursor-pointer"
-                title="গ্রাহক প্রোফাইল পরিবর্তন করুন"
+                title={lang === 'bn' ? 'গ্রাহক প্রোফাইল পরিবর্তন করুন' : 'Switch Customer Profile'}
               >
                 <span className="w-2 h-2 rounded-full bg-[var(--success)] shrink-0"></span>
                 <span className="max-w-[90px] sm:max-w-none truncate">{displayName}</span>
@@ -110,12 +123,12 @@ export const Navbar: React.FC = () => {
               {customerDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-72 bg-[var(--card)] border border-[var(--line)] rounded-[20px] shadow-xl py-2 z-50 animate-in fade-in duration-150">
                   <div className="px-4 py-2 border-b border-[var(--line)] text-[11px] font-bold text-[var(--muted)] uppercase tracking-wider">
-                    টেস্ট প্রোফাইল নির্বাচন করুন
+                    {lang === 'bn' ? 'টেস্ট প্রোফাইল নির্বাচন করুন' : 'Select Test Profile'}
                   </div>
                   <div className="max-h-72 overflow-y-auto divide-y divide-[var(--line)]/50">
                     {customers.map((c) => {
-                      const cName = customerNamesBn[c.customer_id]?.name || c.name;
-                      const cProfile = customerNamesBn[c.customer_id]?.profile || c.financial_profile;
+                      const cName = lang === 'bn' ? (customerNamesBn[c.customer_id]?.name || c.name) : c.name;
+                      const cProfile = lang === 'bn' ? (customerNamesBn[c.customer_id]?.profile || c.financial_profile) : c.financial_profile;
                       const isSelected = c.customer_id === selectedCustomerId;
                       return (
                         <button
@@ -136,7 +149,7 @@ export const Navbar: React.FC = () => {
                               <p className="text-[13px] font-bold text-[var(--navy)] truncate">{cName}</p>
                               {c.customer_id === 'C001' && (
                                 <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--danger-soft)] text-[var(--danger)]">
-                                  ডেমো
+                                  {lang === 'bn' ? 'ডেমো' : 'DEMO'}
                                 </span>
                               )}
                             </div>
@@ -150,36 +163,52 @@ export const Navbar: React.FC = () => {
               )}
             </div>
 
-            {/* Bangla / EN Toggle */}
-            <div className="flex items-center bg-[var(--bg)] border border-[var(--line)] rounded-full p-0.5 text-xs font-bold">
+            {/* State-Managed Bangla / English Language Toggle with Dynamic Font Switch */}
+            <div
+              className="flex items-center bg-[var(--bg)] border border-[var(--line)] rounded-full p-0.5 text-xs font-bold shadow-xs transition-all"
+              role="group"
+              aria-label="Language Toggle"
+            >
               <button
+                type="button"
                 onClick={() => setLang('bn')}
-                className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
                   lang === 'bn'
-                    ? 'bg-[var(--navy)] text-white shadow-xs'
-                    : 'text-[var(--muted)] hover:text-[var(--navy)]'
+                    ? 'bg-[var(--navy)] text-[var(--yellow)] shadow-xs font-bold'
+                    : 'text-[var(--muted)] hover:text-[var(--navy)] font-medium'
                 }`}
+                aria-pressed={lang === 'bn'}
+                title="বাংলা (Hind Siliguri ফন্ট)"
               >
-                বাং
+                <span>বাং</span>
+                {lang === 'bn' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--yellow)]"></span>
+                )}
               </button>
               <button
+                type="button"
                 onClick={() => setLang('en')}
-                className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
                   lang === 'en'
-                    ? 'bg-[var(--navy)] text-white shadow-xs'
-                    : 'text-[var(--muted)] hover:text-[var(--navy)]'
+                    ? 'bg-[var(--navy)] text-[var(--yellow)] shadow-xs font-bold'
+                    : 'text-[var(--muted)] hover:text-[var(--navy)] font-medium'
                 }`}
+                aria-pressed={lang === 'en'}
+                title="English (Inter font)"
               >
-                EN
+                <span>EN</span>
+                {lang === 'en' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--yellow)]"></span>
+                )}
               </button>
             </div>
 
             {/* Notification Bell with red dot */}
             <button
               className="relative p-2 rounded-[14px] text-[var(--muted)] hover:text-[var(--navy)] hover:bg-[var(--bg)] transition-colors cursor-pointer"
-              aria-label="বিজ্ঞপ্তি"
+              aria-label={lang === 'bn' ? 'বিজ্ঞপ্তি' : 'Notifications'}
               onClick={() => setIsHowItWorksOpen(true)}
-              title="সতর্কবার্তা ও বিজ্ঞপ্তি"
+              title={lang === 'bn' ? 'সতর্কবার্তা ও মডেলের স্বচ্ছতা' : 'Alerts & Model Transparency'}
             >
               <Bell className="w-4 h-4 text-[var(--navy)]" />
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[var(--danger)] ring-2 ring-white"></span>

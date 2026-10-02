@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, ReactNode } from 'react';
 import {
   Customer,
   CustomerFinancialProfile,
@@ -20,6 +20,10 @@ import { detectSpendingAnomalies } from '../services/anomalyDetectionEngine';
 import { generateRecommendations } from '../services/recommendationEngine';
 import { getCustomerSavingsGoals } from '../services/savingsPlannerEngine';
 import { Language, translations, formatCurrency } from '../utils/translations';
+import {
+  subscribeToFirebaseGoals,
+  addGoalToFirebase,
+} from '../services/firebaseSync';
 
 interface FinancialContextType {
   customers: Customer[];
@@ -39,22 +43,73 @@ interface FinancialContextType {
   setIsHowItWorksOpen: (open: boolean) => void;
   isAddGoalModalOpen: boolean;
   setIsAddGoalModalOpen: (open: boolean) => void;
-  addGoal: (goal: Omit<SavingsGoal, 'goal_id' | 'customer_id'>) => void;
+  addGoal: (goal: Omit<SavingsGoal, 'goal_id' | 'customer_id'>) => Promise<void>;
   lang: Language;
   setLang: (lang: Language) => void;
+  toggleLang: () => void;
   t: typeof translations.en;
   formatMoney: (amount: number) => string;
+  isFirebaseConnected: boolean;
+  firebaseProjectId: string;
 }
 
 const FinancialContext = createContext<FinancialContextType | undefined>(undefined);
 
 export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('C001');
-  const [lang, setLang] = useState<Language>('bn'); // Default to Bangla as requested for full accessibility!
+  const [lang, setLang] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem('upay_app_lang');
+      if (saved === 'en' || saved === 'bn') return saved;
+    } catch {
+      // ignore
+    }
+    return 'bn'; // Default to Bangla as requested
+  });
   const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);
   const [customGoals, setCustomGoals] = useState<Record<string, SavingsGoal[]>>({});
+  const [firebaseLiveGoals, setFirebaseLiveGoals] = useState<Record<string, SavingsGoal[]>>({});
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(true);
+  const firebaseProjectId = "upay-financial-resilience-ai";
+
+  // Sync document language attribute and font stylesheet
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.documentElement.setAttribute('data-lang', lang);
+    try {
+      localStorage.setItem('upay_app_lang', lang);
+    } catch {
+      // ignore
+    }
+  }, [lang]);
+
+  // Real-time Firebase Firestore Subscription alongside demo data
+  useEffect(() => {
+    const unsubscribe = subscribeToFirebaseGoals(
+      selectedCustomerId,
+      (liveGoals) => {
+        setFirebaseLiveGoals((prev) => ({
+          ...prev,
+          [selectedCustomerId]: liveGoals,
+        }));
+        setIsFirebaseConnected(true);
+      },
+      () => {
+        // Fallback to local persistence gracefully if offline
+        setIsFirebaseConnected(false);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedCustomerId]);
+
+  const toggleLang = () => {
+    setLang((prev) => (prev === 'bn' ? 'en' : 'bn'));
+  };
 
   const t = useMemo(() => {
     return translations[lang];
@@ -91,22 +146,40 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
     return generateRecommendations(profile, risk, anomalies);
   }, [profile, risk, anomalies]);
 
+  // Merge base synthetic goals, custom added goals, and real-time Firebase goals
   const goals = useMemo(() => {
     const baseGoals = getCustomerSavingsGoals(selectedCustomerId);
-    const added = customGoals[selectedCustomerId] || [];
-    return [...baseGoals, ...added];
-  }, [selectedCustomerId, customGoals]);
+    const addedLocal = customGoals[selectedCustomerId] || [];
+    const addedLive = firebaseLiveGoals[selectedCustomerId] || [];
 
-  const addGoal = (newGoalData: Omit<SavingsGoal, 'goal_id' | 'customer_id'>) => {
+    const map = new Map<string, SavingsGoal>();
+    baseGoals.forEach((g) => map.set(g.goal_id, g));
+    addedLocal.forEach((g) => map.set(g.goal_id, g));
+    addedLive.forEach((g) => map.set(g.goal_id, g));
+
+    return Array.from(map.values());
+  }, [selectedCustomerId, customGoals, firebaseLiveGoals]);
+
+  const addGoal = async (newGoalData: Omit<SavingsGoal, 'goal_id' | 'customer_id'>) => {
     const newGoal: SavingsGoal = {
       ...newGoalData,
       goal_id: `G_CUSTOM_${Date.now()}`,
       customer_id: selectedCustomerId,
     };
+
+    // Optimistic local update
     setCustomGoals((prev) => ({
       ...prev,
       [selectedCustomerId]: [...(prev[selectedCustomerId] || []), newGoal],
     }));
+
+    // Real-time write to Firebase Firestore
+    try {
+      await addGoalToFirebase(newGoal);
+      setIsFirebaseConnected(true);
+    } catch (err) {
+      console.warn('Real-time Firebase write fallback', err);
+    }
   };
 
   const formatMoney = (amount: number) => {
@@ -136,8 +209,11 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         addGoal,
         lang,
         setLang,
+        toggleLang,
         t,
         formatMoney,
+        isFirebaseConnected,
+        firebaseProjectId,
       }}
     >
       {children}

@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for validating requests
+    function isValidGoal(data) {
+      return data.keys().hasAll(['customer_id', 'goal_name', 'target_amount', 'current_amount']) &&
+             data.target_amount is number && data.target_amount > 0 &&
+             data.current_amount is number && data.current_amount >= 0 &&
+             data.goal_name is string && data.goal_name.size() > 0 && data.goal_name.size() <= 100;
+    }
+
+    function isValidSimulation(data) {
+      return data.keys().hasAll(['timestamp']);
+    }
+
+    // Rules for savings_goals collection
+    match /savings_goals/{goalId} {
+      // Allow reading goals for demonstrator & user profiles
+      allow read: if true;
+
+      // Allow creating goals with schema validation
+      allow create: if isValidGoal(request.resource.data);
+
+      // Allow updating goals
+      allow update: if isValidGoal(request.resource.data);
+
+      // Disallow client-side arbitrary deletions
+      allow delete: if false;
+    }
+
+    // Rules for simulations collection (What-If scenario logs)
+    match /simulations/{simId} {
+      allow read: if true;
+      allow create: if isValidSimulation(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    // Default deny for all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

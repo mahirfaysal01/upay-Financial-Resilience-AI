@@ -15,8 +15,20 @@
     --danger-soft: #FDECEC;
     --success: #1FA971;
 
+    /* Default to Bangla Hind Siliguri typography */
     --font-heading: 'Anek Bangla', 'Hind Siliguri', sans-serif;
     --font-body: 'Hind Siliguri', 'Anek Bangla', sans-serif;
+  }
+
+  /* Dynamic font switching based on data-lang and lang attributes */
+  html[lang="bn"], html[data-lang="bn"], .lang-bn {
+    --font-heading: 'Anek Bangla', 'Hind Siliguri', sans-serif;
+    --font-body: 'Hind Siliguri', 'Anek Bangla', sans-serif;
+  }
+
+  html[lang="en"], html[data-lang="en"], .lang-en {
+    --font-heading: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   body {
@@ -27,11 +39,16 @@
     line-height: 1.6;
     margin: 0;
     padding: 0;
+    transition: font-family 0.15s ease;
   }
 
   h1, h2, h3, h4, .font-heading {
     font-family: var(--font-heading);
     letter-spacing: -0.01em;
+  }
+
+  input, textarea, select, button {
+    font-family: var(--font-body);
   }
 
   h1 {
