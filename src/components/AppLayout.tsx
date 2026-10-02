@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate, Link } from 'react-router-dom';
+import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { useFinancial } from '../context/FinancialContext';
 import { Navbar } from './Navbar';
 import { ResponsibleAIModal } from './ResponsibleAIModal';
@@ -9,6 +9,7 @@ import { ResilienceScorecardModal } from './ResilienceScorecardModal';
 import { UpayLogo } from './UpayLogo';
 import { PhoneCall, ShieldCheck, HeartHandshake } from 'lucide-react';
 
+import { HomePage } from '../pages/HomePage';
 import { Dashboard } from '../pages/Dashboard';
 import { SpendingIntelligence } from '../pages/SpendingIntelligence';
 import { CashFlowForecast } from '../pages/CashFlowForecast';
@@ -20,6 +21,21 @@ import { ProfileOverview } from '../pages/ProfileOverview';
 
 export const AppLayout: React.FC = () => {
   const { lang, setIsResponsibleModalOpen, setIsHowItWorksOpen } = useFinancial();
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+
+  if (isHomePage) {
+    return (
+      <div className={`min-h-screen bg-[var(--bg)] text-[var(--ink)] flex flex-col ${lang === 'bn' ? 'lang-bn' : 'lang-en'}`}>
+        <HomePage />
+        {/* Modals */}
+        <ResponsibleAIModal />
+        <HowItWorksModal />
+        <AddGoalModal />
+        <ResilienceScorecardModal />
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen bg-[var(--bg-page)] text-[var(--text-main)] flex flex-col ${lang === 'bn' ? 'lang-bn' : 'lang-en'}`}>
@@ -27,7 +43,7 @@ export const AppLayout: React.FC = () => {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/spending" element={<SpendingIntelligence />} />
           <Route path="/forecast" element={<CashFlowForecast />} />
           <Route path="/risk" element={<FinancialRisk />} />
@@ -35,7 +51,7 @@ export const AppLayout: React.FC = () => {
           <Route path="/goals" element={<SavingsGoals />} />
           <Route path="/coach" element={<AICoach />} />
           <Route path="/profile" element={<ProfileOverview />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
 

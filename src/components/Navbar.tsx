@@ -37,7 +37,7 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
 
   const navLinks = [
-    { to: '/', label: t.nav.dashboard, icon: TrendingUp },
+    { to: '/dashboard', label: t.nav.dashboard, icon: TrendingUp },
     { to: '/spending', label: t.nav.spending, icon: PieChart },
     { to: '/forecast', label: t.nav.forecast, icon: Calendar },
     {
