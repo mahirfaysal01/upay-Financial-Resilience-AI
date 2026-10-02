@@ -19,6 +19,16 @@ import {
   Clock,
   ArrowUpRight,
   Download,
+  Lock,
+  Unlock,
+  Shield,
+  Zap,
+  Award,
+  Mic,
+  MicOff,
+  Volume2,
+  QrCode,
+  Check,
 } from 'lucide-react';
 import {
   LineChart,
@@ -30,15 +40,39 @@ import {
   PieChart,
   Pie,
   Cell,
+  CartesianGrid,
 } from 'recharts';
 import { useFinancial } from '../context/FinancialContext';
 import { useNotification } from '../context/NotificationContext';
 import { askAICoach, buildCoachContext, fetchGeminiDeepInsights } from '../services/aiCoachEngine';
 import { toBengaliNumber } from '../utils/translations';
 import { exportMonthlyFinancialDataCSV } from '../utils/exportFinancialData';
+import { startSpeechListening, speakText, stopSpeaking, isSpeechRecognitionSupported } from '../utils/speechVoiceHelper';
 
 export const Dashboard: React.FC = () => {
-  const { customer, profile, transactions, forecast, risk, anomalies, recommendations, goals, lang, t, formatMoney } = useFinancial();
+  const {
+    customer,
+    profile,
+    transactions,
+    forecast,
+    risk,
+    anomalies,
+    recommendations,
+    goals,
+    lang,
+    t,
+    formatMoney,
+    isBillBufferLocked,
+    toggleBillBuffer,
+    isDailySpendCapped,
+    toggleDailySpendCap,
+    isEmergencyBufferActive,
+    toggleEmergencyBuffer,
+    isMerchantQrOptimized,
+    toggleMerchantQrOptimized,
+    setIsResilienceModalOpen,
+  } = useFinancial();
+
   const { notifyFinancial } = useNotification();
 
   // AI Advice Chat state in dashboard
@@ -47,6 +81,10 @@ export const Dashboard: React.FC = () => {
     Array<{ role: 'user' | 'assistant'; text: string; source?: string; model?: string }>
   >([]);
   const [isAskingAI, setIsAskingAI] = useState(false);
+
+  // Bangla Voice Input state
+  const [isListening, setIsListening] = useState(false);
+  const [speechActiveObj, setSpeechActiveObj] = useState<{ stop: () => void } | null>(null);
 
   // CSV Data Export state
   const [isExporting, setIsExporting] = useState(false);
@@ -96,32 +134,17 @@ export const Dashboard: React.FC = () => {
   // Synchronize greeting message and critical financial alerts on customer or language change
   useEffect(() => {
     const greeting = lang === 'bn'
-      ? `আসসালামু আলাইকুম ${customer.name === 'Rahim Hasan' ? 'রহিম' : customer.name}! আমি গুগল জেমিনাই চালিত উপায় এআই সহকারী। আজ আপনাকে কীভাবে সাহায্য করতে পারি? আপনার ওয়ালেট, বাজেট, আসন্ন বিল কিংবা যেকোনো আর্থিক বিষয়ে প্রশ্ন করতে পারেন।`
-      : `Hello ${customer.name}! I am your upay AI assistant powered by Google Gemini. How can I help you today? Feel free to ask me anything about your wallet, upcoming bills, budget, or general financial topics!`;
+      ? `আসসালামু আলাইকুম ${customer.name === 'Rahim Hasan' ? 'রহিম' : customer.name}! আমি উপায় এআই সহকারী। আজ আপনাকে কীভাবে সাহায্য করতে পারি? আপনার ওয়ালেট, বাজেট, আসন্ন বিল কিংবা যেকোনো আর্থিক বিষয়ে প্রশ্ন করতে পারেন।`
+      : `Hello ${customer.name}! I am your upay AI financial assistant. How can I help you today? Feel free to ask me anything about your wallet, upcoming bills, budget, or general financial topics!`;
 
-    setAdviceMessages([{ role: 'assistant', text: greeting }]);
-
-    // If customer has a high shortage risk, trigger a contextual financial toast
-    if (risk.riskLevel === 'HIGH' || risk.probability >= 0.7) {
-      const timer = setTimeout(() => {
-        notifyFinancial(
-          lang === 'bn' ? 'জরুরি তারল্য ঝুঁকি সতর্কতা' : 'Critical Cashflow Risk Alert',
-          lang === 'bn'
-            ? `${customer.name}-এর ওয়ালেটে আগামী ${profile.daysUntilNextIncome} দিনের মধ্যে ৳১,০০০ এর নিচে নামার উচ্চ ঝুঁকি রয়েছে।`
-            : `${customer.name} has a high risk of dropping below ৳1,000 threshold within ${profile.daysUntilNextIncome} days.`,
-          {
-            financialDetails: {
-              amount: profile.currentBalance,
-              category: `ঝুঁকির মাত্রা: ${Math.round(risk.probability * 100)}%`,
-              trend: 'down',
-            },
-            duration: 6000,
-          }
-        );
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [customer.customer_id, lang, profile.daysUntilNextIncome, risk.riskLevel, risk.probability]);
+    setAdviceMessages([
+      {
+        role: 'assistant',
+        text: greeting,
+        source: 'upay-ai',
+      },
+    ]);
+  }, [customer.customer_id, lang]);
 
   const handleAskAI = async (queryText?: string) => {
     const q = (queryText || adviceInput).trim();
@@ -157,7 +180,7 @@ export const Dashboard: React.FC = () => {
       ...prev,
       {
         role: 'user',
-        text: lang === 'bn' ? 'আমার জন্য বিস্তারিত গুগল জেমিনাই রেজিলিয়েন্স অ্যানালাইসিস দিন।' : 'Generate comprehensive Google Gemini financial resilience analysis for me.',
+        text: lang === 'bn' ? 'আমার জন্য বিস্তারিত আর্থিক রেজিলিয়েন্স অ্যানালাইসিস দিন।' : 'Generate comprehensive financial resilience analysis for me.',
       },
     ]);
 
@@ -171,7 +194,6 @@ export const Dashboard: React.FC = () => {
             role: 'assistant',
             text: res.text!,
             source: res.source,
-            model: res.source,
           },
         ]);
       } else {
@@ -187,7 +209,6 @@ export const Dashboard: React.FC = () => {
             role: 'assistant',
             text: fallback.text,
             source: fallback.source,
-            model: fallback.model,
           },
         ]);
       }
@@ -198,13 +219,53 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // Category palette strictly using the brand system
+  // Toggle voice listening
+  const handleToggleVoice = () => {
+    if (isListening) {
+      speechActiveObj?.stop();
+      setIsListening(false);
+      setSpeechActiveObj(null);
+      return;
+    }
+
+    setIsListening(true);
+    const listener = startSpeechListening(
+      lang,
+      (transcript) => {
+        setAdviceInput(transcript);
+        setIsListening(false);
+        setSpeechActiveObj(null);
+        notifyFinancial(
+          lang === 'bn' ? 'ভয়েস ইনপুট গৃহীত' : 'Voice Input Captured',
+          transcript,
+          { duration: 3000 }
+        );
+      },
+      (err) => {
+        console.warn('Voice error', err);
+        setIsListening(false);
+        setSpeechActiveObj(null);
+      },
+      () => {
+        setIsListening(false);
+        setSpeechActiveObj(null);
+      }
+    );
+
+    if (listener) {
+      setSpeechActiveObj(listener);
+    } else {
+      setIsListening(false);
+    }
+  };
+
+  // Category palette strictly using the official upay brand tokens
   const BRAND_PIE_COLORS = [
-    '#FFC20E', // yellow
-    '#0B1F4B', // navy
-    '#E5484D', // danger
-    '#1FA971', // success
-    '#5B6685', // muted
+    '#FFC400', // upay Accent Yellow
+    '#001C44', // upay Brand Navy
+    '#1FA971', // Success Green
+    '#E5484D', // Danger Red
+    '#5E6D82', // Muted Slate
   ];
 
   const categoryNames: Record<string, { bn: string; en: string }> = {
@@ -234,7 +295,7 @@ export const Dashboard: React.FC = () => {
     baseline: p.baselineBalance,
   }));
 
-  // Circular gauge calculations (Circumference of r=45 is 2 * PI * 45 ~= 282.74)
+  // Circular gauge calculations
   const riskPct = Math.round(risk.probability * 100);
   const displayRiskPct = lang === 'bn' ? `${toBengaliNumber(riskPct)}%` : `${riskPct}%`;
   const circleRadius = 45;
@@ -243,32 +304,32 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* 2) HERO BANNER */}
+      {/* 1) HERO BANNER WITH RISK GAUGE */}
       <section
-        className="relative overflow-hidden rounded-[28px] bg-[var(--navy)] text-white p-6 sm:p-10 shadow-[0_4px_24px_rgba(11,31,75,0.08)]"
+        className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[var(--brand-primary)] via-[var(--brand-primary)] to-[var(--brand-primary-dark)] text-white p-6 sm:p-10 shadow-[0_8px_30px_rgba(0,28,68,0.12)] border border-[var(--brand-primary-dark)]"
         aria-label={lang === 'bn' ? 'অ্যাকাউন্ট সারসংক্ষেপ ও আর্থিক স্বাস্থ্য' : 'Account Summary & Resilience Overview'}
       >
-        {/* Decorative soft circles as specified */}
+        {/* Soft decorative background circles */}
         <div
-          className="absolute -top-16 -right-16 w-80 h-80 rounded-full bg-[var(--navy-2)] opacity-80 pointer-events-none"
+          className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-[var(--brand-accent)] opacity-10 blur-2xl pointer-events-none"
           aria-hidden="true"
         />
         <div
-          className="absolute -bottom-6 left-1/3 w-20 h-20 rounded-full bg-[var(--yellow)] opacity-90 blur-[2px] pointer-events-none"
+          className="absolute -bottom-10 left-1/3 w-32 h-32 rounded-full bg-[var(--brand-accent)] opacity-15 blur-xl pointer-events-none"
           aria-hidden="true"
         />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column (Content & Buttons) */}
           <div className="lg:col-span-8 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-[12.5px] font-semibold tracking-wide backdrop-blur-xs border border-white/15">
-              <span className="w-2 h-2 rounded-full bg-[var(--yellow)]"></span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.2 rounded-full bg-white/10 text-white text-[12.5px] font-semibold tracking-wide backdrop-blur-xs border border-white/15">
+              <span className="w-2 h-2 rounded-full bg-[var(--brand-accent)]"></span>
               <span>
                 {lang === 'bn' ? 'অ্যাকাউন্ট বিশ্লেষণ · অক্টোবর ২০২৬' : 'Account Analytics · October 2026'}
               </span>
             </div>
 
-            <h1 className="font-heading font-extrabold text-white leading-[1.2]">
+            <h1 className="font-heading font-extrabold text-white leading-[1.25]">
               {lang === 'bn'
                 ? 'সমস্যা হওয়ার আগেই জানুন আপনার ভবিষ্যৎ আর্থিক অবস্থা'
                 : 'Know your financial future before it becomes a problem'}
@@ -282,19 +343,27 @@ export const Dashboard: React.FC = () => {
 
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <Link to="/simulator" className="btn-primary">
-                <Sliders className="w-4 h-4 text-[var(--navy)]" />
+                <Sliders className="w-4 h-4 text-[var(--brand-primary)]" />
                 <span>{lang === 'bn' ? 'সিমুলেশন শুরু করুন' : 'Launch Simulator'}</span>
               </Link>
               <Link to="/coach" className="btn-secondary-white">
                 <Bot className="w-4 h-4 text-white" />
                 <span>{lang === 'bn' ? 'এআই পরামর্শকের সাথে কথা বলুন' : 'Talk with AI Coach'}</span>
               </Link>
+              <button
+                onClick={() => setIsResilienceModalOpen(true)}
+                className="btn-secondary-white !border-[var(--brand-accent)] !text-[var(--brand-accent)] hover:!bg-[var(--brand-accent)]/15"
+                title={lang === 'bn' ? 'রেজিলিয়েন্স সনদ ও স্কোরকার্ড দেখুন' : 'View Financial Resilience Scorecard'}
+              >
+                <Award className="w-4 h-4 text-[var(--brand-accent)]" />
+                <span>{lang === 'bn' ? 'রেজিলিয়েন্স সনদ' : 'Resilience Certificate'}</span>
+              </button>
             </div>
           </div>
 
-          {/* Right Column (Single Highlight: Circular Risk Gauge) */}
+          {/* Right Column (Circular Risk Gauge) */}
           <div className="lg:col-span-4 flex justify-center lg:justify-end">
-            <div className="relative w-52 h-52 sm:w-56 sm:h-56 rounded-full bg-white shadow-[0_12px_32px_rgba(0,0,0,0.22)] p-4 flex flex-col items-center justify-center border-4 border-white/20">
+            <div className="relative w-52 h-52 sm:w-56 sm:h-56 rounded-full bg-white shadow-[0_12px_32px_rgba(0,28,68,0.25)] p-4 flex flex-col items-center justify-center border-4 border-white/25">
               <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 120 120">
                 {/* Background Ring */}
                 <circle
@@ -302,7 +371,7 @@ export const Dashboard: React.FC = () => {
                   cy="60"
                   r={circleRadius}
                   fill="transparent"
-                  stroke="#E4E8F2"
+                  stroke="#E2E8F0"
                   strokeWidth="9"
                 />
                 {/* Animated Red Arc */}
@@ -311,7 +380,7 @@ export const Dashboard: React.FC = () => {
                   cy="60"
                   r={circleRadius}
                   fill="transparent"
-                  stroke="#E5484D"
+                  stroke={risk.riskLevel === 'HIGH' ? '#E5484D' : risk.riskLevel === 'MODERATE' ? '#FFC400' : '#1FA971'}
                   strokeWidth="9.5"
                   strokeDasharray={circumference}
                   strokeDashoffset={strokeDashoffset}
@@ -322,16 +391,26 @@ export const Dashboard: React.FC = () => {
 
               {/* Center Content in Gauge */}
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-[12px] font-bold text-[var(--muted)] uppercase tracking-wider">
+                <span className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                   {lang === 'bn' ? 'ঘাটতির ঝুঁকি' : 'Shortage Risk'}
                 </span>
-                <span className="font-heading font-extrabold text-[38px] sm:text-[42px] text-[var(--danger)] leading-none my-0.5">
+                <span className={`font-heading font-extrabold text-[38px] sm:text-[42px] leading-none my-0.5 ${
+                  risk.riskLevel === 'HIGH' ? 'text-[var(--danger)]' : risk.riskLevel === 'MODERATE' ? 'text-amber-600' : 'text-[var(--success)]'
+                }`}>
                   {displayRiskPct}
                 </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[var(--danger-soft)] text-[var(--danger)] text-[11px] font-extrabold">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${
+                  risk.riskLevel === 'HIGH'
+                    ? 'bg-[var(--danger-soft)] text-[var(--danger)]'
+                    : risk.riskLevel === 'MODERATE'
+                    ? 'bg-amber-50 text-amber-800'
+                    : 'bg-emerald-50 text-emerald-800'
+                }`}>
                   {risk.riskLevel === 'HIGH'
                     ? (lang === 'bn' ? 'উচ্চ ঝুঁকি' : 'High Risk')
-                    : (lang === 'bn' ? 'মাঝারি ঝুঁকি' : 'Moderate Risk')}
+                    : risk.riskLevel === 'MODERATE'
+                    ? (lang === 'bn' ? 'মাঝারি ঝুঁকি' : 'Moderate')
+                    : (lang === 'bn' ? 'নিরাপদ' : 'Safe Buffer')}
                 </span>
               </div>
             </div>
@@ -339,19 +418,175 @@ export const Dashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* 3) FINANCIAL SUMMARIES SECTION & DATA EXPORT (5 Cards) */}
+      {/* 2) ONE-TAP ACTIONABLE INTERVENTIONS (HACKATHON WINNER FEATURE) */}
+      <section className="upay-card p-5 sm:p-6 space-y-4" aria-label={lang === 'bn' ? 'এক-ক্লিকে রেজিলিয়েন্স অ্যাকশন' : 'One-Tap Resilience Actions'}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-[var(--brand-accent)] text-[var(--brand-primary)] flex items-center justify-center font-black">
+              <Zap className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <h3 className="text-[var(--brand-primary)]">
+                {lang === 'bn' ? 'এক-ক্লিকে রেজিলিয়েন্স অ্যাকশন (Actionable Interventions)' : 'One-Tap Financial Interventions'}
+              </h3>
+              <p className="text-caption text-[var(--text-muted)]">
+                {lang === 'bn'
+                  ? 'শুধু পরামর্শ নয়; নিচের বাটনগুলোতে চাপ দিয়ে সরাসরি আপনার ওয়ালেটের ঝুঁকি হ্রাস করুন'
+                  : 'Proactive safeguards you can toggle in real-time to mitigate month-end liquidity stress'}
+              </p>
+            </div>
+          </div>
+          <span className="text-[11.5px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 self-start sm:self-auto">
+            {lang === 'bn' ? 'লাইভ অ্যালগরিদম সক্রিয়' : 'Live Calculation Active'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          {/* Action 1: Lock Bill Buffer */}
+          <button
+            onClick={() => {
+              toggleBillBuffer();
+              notifyFinancial(
+                !isBillBufferLocked
+                  ? (lang === 'bn' ? 'বিল বাফার লক সম্পন্ন' : 'Bill Buffer Locked')
+                  : (lang === 'bn' ? 'বিল বাফার আনলকড' : 'Bill Buffer Unlocked'),
+                !isBillBufferLocked
+                  ? (lang === 'bn' ? '৳২,০০০ ইউটিলিটি বিলের টাকা সুরক্ষিত রাখা হয়েছে। ঘাটতি ঝুঁকি ১৪% কমেছে।' : '৳2,000 utility buffer locked. Shortage risk dropped 14%.')
+                  : (lang === 'bn' ? 'ইউটিলিটি বাফার পুনরায় মূল ব্যালেন্সে যুক্ত হয়েছে।' : 'Buffer returned to general balance.')
+              );
+            }}
+            className={`p-4 rounded-[16px] border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+              isBillBufferLocked
+                ? 'bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-500/20'
+                : 'bg-[var(--bg-page)] border-[var(--border)] hover:border-[var(--brand-primary)]/40'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {isBillBufferLocked ? (
+                  <Lock className="w-4.5 h-4.5 text-emerald-600" />
+                ) : (
+                  <Unlock className="w-4.5 h-4.5 text-[var(--text-muted)]" />
+                )}
+                <span className="text-[14px] font-bold text-[var(--brand-primary)]">
+                  {lang === 'bn' ? '১. বিল বাফার লক' : '1. Lock Bill Buffer'}
+                </span>
+              </div>
+              <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full ${
+                isBillBufferLocked ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                {isBillBufferLocked ? (lang === 'bn' ? 'লকড' : 'LOCKED') : (lang === 'bn' ? 'লক করুন' : 'LOCK')}
+              </span>
+            </div>
+            <p className="text-caption text-[var(--text-muted)]">
+              {lang === 'bn'
+                ? 'ডিপিডিসি ও ইন্টারনেট বিলের ৳২,০০০ আলাদা করে সুরক্ষিত রাখে যাতে ভুলে খরচ না হয়।'
+                : 'Reserves ৳2,000 for utility bills so it cannot be spent accidentally.'}
+            </p>
+            <div className="text-[12px] font-bold text-emerald-700 flex items-center gap-1">
+              <span>{isBillBufferLocked ? '✓ ঝুঁকি হ্রাস: -১৪%' : '+ ট্যাপ করে ১৪% ঝুঁকি কমান'}</span>
+            </div>
+          </button>
+
+          {/* Action 2: Daily Spending Cap */}
+          <button
+            onClick={() => {
+              toggleDailySpendCap();
+              notifyFinancial(
+                !isDailySpendCapped
+                  ? (lang === 'bn' ? 'দৈনিক ব্যয়ের সিলিং সক্রিয়' : 'Daily Spend Cap Active')
+                  : (lang === 'bn' ? 'ব্যয়ের সিলিং নিষ্ক্রিয়' : 'Spend Cap Disabled'),
+                !isDailySpendCapped
+                  ? (lang === 'bn' ? 'পরবর্তী ১১ দিনের দৈনিক খরচের সীমা ৳২৯০ সেট করা হয়েছে।' : 'Daily spending capped at ৳290/day.')
+                  : (lang === 'bn' ? 'স্বাভাবিক দৈনিক গড় খরচে ফিরে গেছে।' : 'Reset to default daily pace.')
+              );
+            }}
+            className={`p-4 rounded-[16px] border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+              isDailySpendCapped
+                ? 'bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-500/20'
+                : 'bg-[var(--bg-page)] border-[var(--border)] hover:border-[var(--brand-primary)]/40'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className={`w-4.5 h-4.5 ${isDailySpendCapped ? 'text-emerald-600' : 'text-[var(--text-muted)]'}`} />
+                <span className="text-[14px] font-bold text-[var(--brand-primary)]">
+                  {lang === 'bn' ? '২. দৈনিক ব্যয় সিলিং' : '2. Daily Spend Cap'}
+                </span>
+              </div>
+              <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full ${
+                isDailySpendCapped ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                {isDailySpendCapped ? (lang === 'bn' ? '৳২৯০/দিন সক্রিয়' : '৳290/d ON') : (lang === 'bn' ? 'সেট করুন' : 'SET')}
+              </span>
+            </div>
+            <p className="text-caption text-[var(--text-muted)]">
+              {lang === 'bn'
+                ? 'বেতন আসার পূর্ব পর্যন্ত প্রতিদিনের খরচ সর্বোচ্চ ৳২৯০-তে সীমাবদ্ধ রাখার স্মার্ট গার্ড।'
+                : 'Smart guard capping daily outflow at ৳290 to prevent month-end depletion.'}
+            </p>
+            <div className="text-[12px] font-bold text-emerald-700 flex items-center gap-1">
+              <span>{isDailySpendCapped ? '✓ ঝুঁকি হ্রাস: -১৬%' : '+ ট্যাপ করে ১৬% ঝুঁকি কমান'}</span>
+            </div>
+          </button>
+
+          {/* Action 3: Emergency Nano-Buffer */}
+          <button
+            onClick={() => {
+              toggleEmergencyBuffer();
+              notifyFinancial(
+                !isEmergencyBufferActive
+                  ? (lang === 'bn' ? 'উপায় ইমার্জেন্সি বাফার চালু' : 'Emergency Nano-Buffer Active')
+                  : (lang === 'bn' ? 'ইমার্জেন্সি বাফার বন্ধ' : 'Emergency Buffer Deactivated'),
+                !isEmergencyBufferActive
+                  ? (lang === 'bn' ? '৳১,০০০ ০%-সুদবিহীন ন্যানো বাফার ওয়ালেটে যোগ হয়েছে।' : '৳1,000 zero-interest nano-buffer added.')
+                  : (lang === 'bn' ? 'ইমার্জেন্সি বাফার বাতিল হয়েছে।' : 'Emergency buffer removed.')
+              );
+            }}
+            className={`p-4 rounded-[16px] border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+              isEmergencyBufferActive
+                ? 'bg-amber-50/80 border-amber-300 ring-2 ring-amber-500/20'
+                : 'bg-[var(--bg-page)] border-[var(--border)] hover:border-[var(--brand-primary)]/40'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className={`w-4.5 h-4.5 ${isEmergencyBufferActive ? 'text-amber-600' : 'text-[var(--text-muted)]'}`} />
+                <span className="text-[14px] font-bold text-[var(--brand-primary)]">
+                  {lang === 'bn' ? '৩. উপায় ইমার্জেন্সি বাফার' : '3. upay Nano-Buffer'}
+                </span>
+              </div>
+              <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full ${
+                isEmergencyBufferActive ? 'bg-amber-500 text-[var(--brand-primary)]' : 'bg-slate-200 text-slate-700'
+              }`}>
+                {isEmergencyBufferActive ? (lang === 'bn' ? '+৳১,০০০ যুক্ত' : '+৳1,000') : (lang === 'bn' ? 'চালু করুন' : 'ACTIVATE')}
+              </span>
+            </div>
+            <p className="text-caption text-[var(--text-muted)]">
+              {lang === 'bn'
+                ? 'শিকারি ঋণ এড়াতে উপায় থেকে ০% সুদে অনুমোদিত ১,০০০ টাকার তাৎক্ষণিক সুরক্ষা।'
+                : 'Pre-approved ৳1,000 zero-interest nano overdraft to prevent predatory loans.'}
+            </p>
+            <div className="text-[12px] font-bold text-amber-700 flex items-center gap-1">
+              <span>{isEmergencyBufferActive ? '✓ বাফার সংরক্ষিত: +৳১,০০০' : '+ ট্যাপ করে ব্যালেন্স সুরক্ষিত করুন'}</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      {/* 3) 5 SUMMARY STAT CARDS (Only Risk Card is Highlighted) */}
       <section className="space-y-3.5" aria-label={lang === 'bn' ? 'আর্থিক সারসংক্ষেপ ও ডেটা এক্সপোর্ট' : 'Financial Summaries & Data Export'}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-heading font-extrabold text-[18px] sm:text-[20px] text-[var(--navy)] leading-tight">
+              <h2 className="font-heading font-extrabold text-[18px] sm:text-[20px] text-[var(--brand-primary)] leading-tight">
                 {lang === 'bn' ? 'আর্থিক সারসংক্ষেপ' : 'Financial Summaries'}
               </h2>
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] font-bold border border-[var(--yellow)]/30 tracking-tight">
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-[var(--brand-accent-soft)] text-[var(--brand-primary)] font-bold border border-[var(--brand-accent)]/40 tracking-tight">
                 {lang === 'bn' ? 'অক্টোবর ২০২৬' : 'October 2026'}
               </span>
             </div>
-            <p className="text-caption text-[var(--muted)] mt-0.5">
+            <p className="text-caption text-[var(--text-muted)] mt-0.5">
               {lang === 'bn'
                 ? 'আপনার চলতি মাসের আয়, ব্যয়, ওয়ালেট ব্যালেন্স এবং লিকুইডিটি ঝুঁকির সার্বিক চিত্র'
                 : 'Key monthly indicators of cash inflows, expenditures, liquid balance, and shortage risks'}
@@ -366,9 +601,10 @@ export const Dashboard: React.FC = () => {
               className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-[14px] text-[13px] font-bold border shadow-2xs transition-all cursor-pointer ${
                 exportSuccess
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                  : 'bg-white hover:bg-[var(--bg)] border-[var(--line)] hover:border-[var(--navy)] text-[var(--navy)]'
+                  : 'bg-[var(--bg-card)] hover:bg-[var(--bg-page)] border-[var(--border)] hover:border-[var(--brand-primary)] text-[var(--brand-primary)]'
               }`}
               title={lang === 'bn' ? 'মাসিক আর্থিক ডেটা সিএসভি (CSV) ফাইল হিসেবে ডাউনলোড করুন' : 'Download monthly financial data as CSV'}
+              aria-label={lang === 'bn' ? 'সিএসভি ডাউনলোড' : 'Export CSV'}
             >
               {exportSuccess ? (
                 <>
@@ -377,12 +613,12 @@ export const Dashboard: React.FC = () => {
                 </>
               ) : isExporting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-[var(--navy)] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
                   <span>{lang === 'bn' ? 'এক্সপোর্ট হচ্ছে...' : 'Exporting...'}</span>
                 </>
               ) : (
                 <>
-                  <Download className="w-4 h-4 text-[var(--navy)]" />
+                  <Download className="w-4 h-4 text-[var(--brand-primary)]" />
                   <span>{lang === 'bn' ? 'সিএসভি ডাউনলোড' : 'Export CSV'}</span>
                 </>
               )}
@@ -394,129 +630,137 @@ export const Dashboard: React.FC = () => {
           className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
           aria-label={lang === 'bn' ? 'আর্থিক সারসংক্ষেপ মেট্রিক্স' : 'Financial Summary Metrics'}
         >
-        {/* Card 1: মোট আয় */}
-        <div className="upay-card p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-semibold text-[var(--muted)]">
-              {lang === 'bn' ? 'মোট আয়' : 'Monthly Inflow'}
-            </span>
-            <div className="w-8 h-8 rounded-[14px] bg-[var(--bg)] flex items-center justify-center text-[var(--navy)]">
-              <DollarSign className="w-4 h-4" />
+          {/* Card 1: মোট আয় */}
+          <div className="upay-card p-5 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] font-semibold text-[var(--text-muted)]">
+                {lang === 'bn' ? 'মোট আয়' : 'Monthly Inflow'}
+              </span>
+              <div className="w-8 h-8 rounded-[12px] bg-[var(--bg-page)] flex items-center justify-center text-[var(--brand-primary)]">
+                <DollarSign className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="my-2">
-            <p className="font-heading font-extrabold text-[24px] sm:text-[26px] text-[var(--ink)] leading-none">
-              {formatMoney(profile.monthlyIncome)}
+            <div className="my-2">
+              <p className="font-heading font-extrabold text-[24px] sm:text-[26px] text-[var(--text-main)] leading-none">
+                {formatMoney(profile.monthlyIncome)}
+              </p>
+            </div>
+            <p className="text-caption text-[var(--text-muted)]">
+              {lang === 'bn'
+                ? `পরবর্তী বেতন: ${toBengaliNumber(profile.daysUntilNextIncome)} দিন পর`
+                : `Next salary: in ${profile.daysUntilNextIncome} days`}
             </p>
           </div>
-          <p className="text-caption text-[var(--muted)]">
-            {lang === 'bn'
-              ? `পরবর্তী বেতন: ${toBengaliNumber(profile.daysUntilNextIncome)} দিন পর`
-              : `Next salary: in ${profile.daysUntilNextIncome} days`}
-          </p>
-        </div>
 
-        {/* Card 2: মাসিক বাজেট / বর্তমান ব্যালেন্স */}
-        <div className="upay-card p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-semibold text-[var(--muted)]">
-              {lang === 'bn' ? 'মাসিক বাজেট' : 'Wallet Balance'}
-            </span>
-            <div className="w-8 h-8 rounded-[14px] bg-[var(--bg)] flex items-center justify-center text-[var(--navy)]">
-              <Wallet className="w-4 h-4" />
+          {/* Card 2: ওয়ালেট ব্যালেন্স */}
+          <div className="upay-card p-5 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] font-semibold text-[var(--text-muted)]">
+                {lang === 'bn' ? 'ওয়ালেট ব্যালেন্স' : 'Wallet Balance'}
+              </span>
+              <div className="w-8 h-8 rounded-[12px] bg-[var(--bg-page)] flex items-center justify-center text-[var(--brand-primary)]">
+                <Wallet className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="my-2">
-            <p className="font-heading font-extrabold text-[24px] sm:text-[26px] text-[var(--ink)] leading-none">
-              {formatMoney(profile.currentBalance)}
+            <div className="my-2">
+              <p className="font-heading font-extrabold text-[24px] sm:text-[26px] text-[var(--text-main)] leading-none">
+                {formatMoney(profile.currentBalance)}
+              </p>
+            </div>
+            <p className="text-caption text-[var(--text-muted)]">
+              {lang === 'bn' ? 'বর্তমান তরল তহবিল' : 'Current liquid balance'}
             </p>
           </div>
-          <p className="text-caption text-[var(--muted)]">
-            {lang === 'bn' ? 'বর্তমান ওয়ালেট ব্যালেন্স' : 'Current liquid balance'}
-          </p>
-        </div>
 
-        {/* Card 3: মোট খরচ */}
-        <div className="upay-card p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-semibold text-[var(--muted)]">
-              {lang === 'bn' ? 'মোট খরচ' : 'Monthly Spending'}
-            </span>
-            <div className="w-8 h-8 rounded-[14px] bg-[var(--bg)] flex items-center justify-center text-[var(--navy)]">
-              <CreditCard className="w-4 h-4" />
+          {/* Card 3: মোট খরচ */}
+          <div className="upay-card p-5 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] font-semibold text-[var(--text-muted)]">
+                {lang === 'bn' ? 'মোট খরচ' : 'Monthly Spending'}
+              </span>
+              <div className="w-8 h-8 rounded-[12px] bg-[var(--bg-page)] flex items-center justify-center text-[var(--brand-primary)]">
+                <CreditCard className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="my-2">
-            <p className="font-heading font-extrabold text-[24px] sm:text-[26px] text-[var(--ink)] leading-none">
-              {formatMoney(profile.averageMonthlySpending)}
+            <div className="my-2">
+              <p className="font-heading font-extrabold text-[24px] sm:text-[26px] text-[var(--text-main)] leading-none">
+                {formatMoney(profile.averageMonthlySpending)}
+              </p>
+            </div>
+            <p className="text-caption text-[var(--text-muted)]">
+              {lang === 'bn'
+                ? `দৈনিক গড়: ${formatMoney(profile.averageDailySpending)}/দিন`
+                : `Daily avg: ${formatMoney(profile.averageDailySpending)}/day`}
             </p>
           </div>
-          <p className="text-caption text-[var(--muted)]">
-            {lang === 'bn'
-              ? `দৈনিক গড়: ${formatMoney(profile.averageDailySpending)}/দিন`
-              : `Daily avg: ${formatMoney(profile.averageDailySpending)}/day`}
-          </p>
-        </div>
 
-        {/* Card 4: আর্থিক ঝুঁকি (Highlighted with danger-soft background & red badge) */}
-        <div className="upay-card-danger p-5 flex flex-col justify-between col-span-2 sm:col-span-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-bold text-[var(--danger)]">
-              {lang === 'bn' ? 'আর্থিক ঝুঁকি' : 'Shortage Risk'}
-            </span>
-            <div className="w-8 h-8 rounded-[14px] bg-white flex items-center justify-center text-[var(--danger)] shadow-xs">
-              <AlertTriangle className="w-4 h-4" />
+          {/* Card 4: আর্থিক ঝুঁকি (HIGHLIGHTED ONLY) */}
+          <div className="upay-card-danger p-5 flex flex-col justify-between col-span-2 sm:col-span-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] font-bold text-[var(--danger)]">
+                {lang === 'bn' ? 'আর্থিক ঝুঁকি' : 'Shortage Risk'}
+              </span>
+              <div className="w-8 h-8 rounded-[12px] bg-white flex items-center justify-center text-[var(--danger)] shadow-xs">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="my-2 flex items-baseline gap-2">
-            <p className="font-heading font-extrabold text-[26px] sm:text-[28px] text-[var(--danger)] leading-none">
-              {displayRiskPct}
-            </p>
-            <span className="px-2 py-0.5 rounded-full bg-[var(--danger)] text-white text-[11px] font-extrabold">
+            <div className="my-2 flex items-baseline gap-2">
+              <p className="font-heading font-extrabold text-[26px] sm:text-[28px] text-[var(--danger)] leading-none">
+                {displayRiskPct}
+              </p>
+              <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+                risk.riskLevel === 'HIGH'
+                  ? 'bg-[var(--danger)] text-white'
+                  : 'bg-emerald-600 text-white'
+              }`}>
+                {risk.riskLevel === 'HIGH'
+                  ? (lang === 'bn' ? 'উচ্চ ঝুঁকি' : 'High Risk')
+                  : (lang === 'bn' ? 'নিয়ন্ত্রিত' : 'Controlled')}
+              </span>
+            </div>
+            <p className="text-caption text-[var(--danger)] font-semibold">
               {risk.riskLevel === 'HIGH'
-                ? (lang === 'bn' ? 'উচ্চ ঝুঁকি' : 'High Risk')
-                : (lang === 'bn' ? 'মাঝারি' : 'Moderate')}
-            </span>
-          </div>
-          <p className="text-caption text-[var(--danger)] font-medium">
-            {lang === 'bn' ? 'ঘাটতির উচ্চ সম্ভাবনা বিদ্যমান' : 'Elevated liquidity risk'}
-          </p>
-        </div>
-
-        {/* Card 5: আগামী মাসের পূর্বাভাস */}
-        <div className="upay-card p-5 flex flex-col justify-between col-span-2 md:col-span-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-semibold text-[var(--muted)]">
-              {lang === 'bn' ? 'মাস শেষের ব্যালেন্স' : 'Projected Month-End'}
-            </span>
-            <div className="w-8 h-8 rounded-[14px] bg-[var(--bg)] flex items-center justify-center text-[var(--navy)]">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="my-2">
-            <p className="font-heading font-extrabold text-[24px] sm:text-[26px] text-[var(--danger)] leading-none">
-              {formatMoney(forecast.monthEndForecast)}
+                ? (lang === 'bn' ? 'ঘাটতির সম্ভাবনা বিদ্যমান' : 'Elevated liquidity risk')
+                : (lang === 'bn' ? 'বাফার দ্বারা ঝুঁকি হ্রাসকৃত' : 'Protected by active safeguards')}
             </p>
           </div>
-          <p className="text-caption text-[var(--danger)] font-medium">
-            {lang === 'bn' ? '৳১,০০০ এর নিচে নামবে ৯ দিনে' : 'Sub-৳1,000 threshold in 9 days'}
-          </p>
-        </div>
+
+          {/* Card 5: মাস শেষের প্রক্ষেপণ */}
+          <div className="upay-card p-5 flex flex-col justify-between col-span-2 md:col-span-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] font-semibold text-[var(--text-muted)]">
+                {lang === 'bn' ? 'মাস শেষের ব্যালেন্স' : 'Projected Month-End'}
+              </span>
+              <div className="w-8 h-8 rounded-[12px] bg-[var(--bg-page)] flex items-center justify-center text-[var(--brand-primary)]">
+                <Calendar className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <p className="font-heading font-extrabold text-[24px] sm:text-[26px] text-[var(--brand-primary)] leading-none">
+                {formatMoney(forecast.monthEndForecast)}
+              </p>
+            </div>
+            <p className="text-caption text-[var(--text-muted)]">
+              {forecast.monthEndForecast > 1000
+                ? (lang === 'bn' ? 'নিরাপদ সংরক্ষিত ব্যালেন্স' : 'Sustained positive liquidity')
+                : (lang === 'bn' ? '৳১,০০০ এর নিচে নামবে ৯ দিনে' : 'Sub-৳1,000 threshold in 9 days')}
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* 4) MAIN GRID: 60/40 Columns on Desktop, Single Column on Mobile */}
+      {/* 4) MAIN GRID: Charts, Reason Tiles, Cash-Out Optimizer & Bills */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (60% ~ col-span-7) */}
+        {/* Left Column (col-span-7) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Card 1: ১৪ দিনের আয়-ব্যয় ট্রেন্ড */}
           <div className="upay-card p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-[#0B1F4B]">
+                <h3 className="text-[var(--brand-primary)]">
                   {lang === 'bn' ? '১৪ দিনের আয়-ব্যয় ট্রেন্ড' : '14-Day Cash-Flow Trajectory'}
                 </h3>
-                <p className="text-caption text-[var(--muted)] mt-0.5">
+                <p className="text-caption text-[var(--text-muted)] mt-0.5">
                   {lang === 'bn'
                     ? 'বর্তমান খরচের ধারা বনাম নিরাপদ ব্যালেন্সের গতিপথ'
                     : 'Projected balance vs historical baseline trajectory'}
@@ -524,20 +768,21 @@ export const Dashboard: React.FC = () => {
               </div>
               <Link
                 to="/forecast"
-                className="inline-flex items-center gap-1 text-[13px] font-bold text-[var(--navy)] hover:text-[var(--yellow)] transition-colors"
+                className="inline-flex items-center gap-1 text-[13px] font-bold text-[var(--brand-primary)] hover:text-[#B38600] transition-colors"
               >
                 <span>{lang === 'bn' ? 'বিস্তারিত' : 'Details'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {/* Line Chart */}
+            {/* Line Chart with Brand Palette & Light Gridlines */}
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={lineChartData} margin={{ top: 12, right: 12, left: -16, bottom: 0 }}>
-                  <XAxis dataKey="day" stroke="#94A3B8" fontSize={11} tickLine={false} />
+                  <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="day" stroke="#64748B" fontSize={11} tickLine={false} />
                   <YAxis
-                    stroke="#94A3B8"
+                    stroke="#64748B"
                     fontSize={11}
                     tickFormatter={(v) => `৳${(v / 1000).toFixed(0)}k`}
                     tickLine={false}
@@ -545,11 +790,11 @@ export const Dashboard: React.FC = () => {
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#FFFFFF',
-                      border: '1px solid #E4E8F2',
+                      border: '1px solid #E2E8F0',
                       borderRadius: '14px',
                       fontSize: '12.5px',
-                      boxShadow: '0 4px 12px rgba(11, 31, 75, 0.08)',
-                      color: '#0B1F4B',
+                      boxShadow: '0 4px 14px rgba(0, 28, 68, 0.08)',
+                      color: '#001C44',
                       fontFamily: lang === 'bn' ? 'Hind Siliguri, sans-serif' : 'Inter, sans-serif',
                     }}
                     formatter={(val: any) => [formatMoney(Number(val)), lang === 'bn' ? 'ব্যালেন্স' : 'Balance']}
@@ -558,10 +803,10 @@ export const Dashboard: React.FC = () => {
                     type="monotone"
                     dataKey="balance"
                     name={lang === 'bn' ? 'এআই পূর্বাভাস ব্যালেন্স' : 'AI Projected Balance'}
-                    stroke="#FFC20E"
+                    stroke="#FFC400"
                     strokeWidth={3}
-                    dot={{ fill: '#0B1F4B', stroke: '#FFC20E', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, fill: '#FFC20E' }}
+                    dot={{ fill: '#001C44', stroke: '#FFC400', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, fill: '#FFC400' }}
                   />
                   <Line
                     type="monotone"
@@ -576,34 +821,52 @@ export const Dashboard: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* Red Alert Strip below chart as specified */}
-            <div className="p-3.5 rounded-[14px] bg-[var(--danger-soft)] border border-[var(--danger)]/25 flex items-center gap-3 text-[13px] text-[var(--danger)] font-medium">
-              <AlertTriangle className="w-4 h-4 shrink-0 text-[var(--danger)]" />
-              <span>
-                <strong>{lang === 'bn' ? 'জরুরি সতর্কতা:' : 'Critical Warning:'}</strong>{' '}
-                {lang === 'bn'
-                  ? 'আগামী ৯ দিনের মধ্যে ওয়ালেট ব্যালেন্স ১,০০০ টাকার নিচে নেমে যাওয়ার স্পষ্ট ঝুঁকি রয়েছে।'
-                  : 'Projected wallet liquidity drops below the ৳1,000 threshold within 9 days.'}
-              </span>
+            {/* Alert Strip below chart */}
+            <div className={`p-3.5 rounded-[14px] border flex items-center gap-3 text-[13px] font-medium ${
+              risk.riskLevel === 'HIGH'
+                ? 'bg-[var(--danger-soft)] border-[var(--danger)]/30 text-[var(--danger)]'
+                : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+            }`}>
+              {risk.riskLevel === 'HIGH' ? (
+                <>
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-[var(--danger)]" />
+                  <span>
+                    <strong>{lang === 'bn' ? 'জরুরি সতর্কতা:' : 'Critical Warning:'}</strong>{' '}
+                    {lang === 'bn'
+                      ? 'আগামী ৯ দিনের মধ্যে ওয়ালেট ব্যালেন্স ১,০০০ টাকার নিচে নেমে যাওয়ার ঝুঁকি রয়েছে। উপরের ইন্টারভেনশন অন করুন।'
+                      : 'Projected liquidity drops below the ৳1,000 threshold within 9 days.'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                  <span>
+                    <strong>{lang === 'bn' ? 'সুরক্ষিত:' : 'Secured:'}</strong>{' '}
+                    {lang === 'bn'
+                      ? 'বাফার লক ও ব্যয়ের সিলিং সক্রিয় থাকায় মাস শেষে ব্যালেন্স নিরাপদ রয়েছে।'
+                      : 'Safeguards active. Balance is projected to remain safe through month-end.'}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Card 2: জানুন ঝুঁকি কেন ৮২%? (2x2 Grid of reason tiles) */}
+          {/* Card 2: জানুন ঝুঁকি কেন? (2x2 Grid of Reason Tiles) */}
           <div className="upay-card p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-[#0B1F4B]">
+                <h3 className="text-[var(--brand-primary)]">
                   {lang === 'bn' ? `জানুন ঝুঁকি কেন ${displayRiskPct}?` : `Why is Shortage Risk at ${displayRiskPct}?`}
                 </h3>
-                <p className="text-caption text-[var(--muted)] mt-0.5">
+                <p className="text-caption text-[var(--text-muted)] mt-0.5">
                   {lang === 'bn'
-                    ? 'গাণিতিক মডেলের শীর্ষ ৪টি কারণ যা আপনার ওয়ালেট ঘাটতি তৈরি করছে'
+                    ? 'শীর্ষ ৪টি কারণ যা আপনার ওয়ালেট ঘাটতি তৈরি করছে'
                     : 'Top 4 key behavioral drivers impacting wallet liquidity'}
                 </p>
               </div>
               <Link
                 to="/risk"
-                className="inline-flex items-center gap-1 text-[13px] font-bold text-[var(--navy)] hover:text-[var(--yellow)] transition-colors"
+                className="inline-flex items-center gap-1 text-[13px] font-bold text-[var(--brand-primary)] hover:text-[#B38600] transition-colors"
               >
                 <span>{lang === 'bn' ? 'ঝুঁকি বিশ্লেষণ' : 'Risk Deep-Dive'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -613,16 +876,16 @@ export const Dashboard: React.FC = () => {
             {/* 2x2 Grid of reason tiles */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {/* Tile 1 */}
-              <div className="p-4 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] space-y-1.5 hover:border-[#D3DAE8] transition-colors">
+              <div className="p-4 rounded-[14px] bg-[var(--bg-page)] border border-[var(--border)] space-y-1.5 hover:border-[var(--brand-primary)]/30 transition-colors">
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-bold text-[var(--navy)]">
+                  <span className="text-[14px] font-bold text-[var(--brand-primary)]">
                     {lang === 'bn' ? '১. খাবার খরচ বৃদ্ধি' : '1. Dining Outflow Surge'}
                   </span>
                   <span className="px-2 py-0.5 rounded-full bg-[var(--danger-soft)] text-[var(--danger)] text-[11px] font-extrabold">
                     +36.8%
                   </span>
                 </div>
-                <p className="text-caption text-[var(--muted)] leading-relaxed">
+                <p className="text-caption text-[var(--text-muted)] leading-relaxed">
                   {lang === 'bn'
                     ? 'রেস্তোরাঁ ও ফুড ডেলিভারি ব্যয় স্বাভাবিক গড়ের চেয়ে অতিরিক্ত হওয়ায় তহবিল দ্রুত হ্রাস পাচ্ছে।'
                     : 'Restaurant and takeout expenses spiked significantly above your 90-day moving average.'}
@@ -630,33 +893,33 @@ export const Dashboard: React.FC = () => {
               </div>
 
               {/* Tile 2 */}
-              <div className="p-4 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] space-y-1.5 hover:border-[#D3DAE8] transition-colors">
+              <div className="p-4 rounded-[14px] bg-[var(--bg-page)] border border-[var(--border)] space-y-1.5 hover:border-[var(--brand-primary)]/30 transition-colors">
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-bold text-[var(--navy)]">
+                  <span className="text-[14px] font-bold text-[var(--brand-primary)]">
                     {lang === 'bn' ? '২. ক্যাশ-আউট নির্ভরতা' : '2. Agent Cash-Out Dependency'}
                   </span>
                   <span className="px-2 py-0.5 rounded-full bg-[var(--danger-soft)] text-[var(--danger)] text-[11px] font-extrabold">
                     +21%
                   </span>
                 </div>
-                <p className="text-caption text-[var(--muted)] leading-relaxed">
+                <p className="text-caption text-[var(--text-muted)] leading-relaxed">
                   {lang === 'bn'
-                    ? 'এজেন্ট থেকে ঘন ঘন ক্যাশ-আউট ফি বাবদ অতিরিক্ত খরচ হচ্ছে এবং হিসাবের অস্বচ্ছতা বাড়ছে।'
+                    ? 'এজেন্ট থেকে ঘন ঘন ক্যাশ-আউট ফি বাবদ অতিরিক্ত খরচ হচ্ছে এবং তহবিল দ্রুত কমছে।'
                     : 'Frequent agent withdrawals generate high cash-out fees and quickly deplete reserves.'}
                 </p>
               </div>
 
               {/* Tile 3 */}
-              <div className="p-4 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] space-y-1.5 hover:border-[#D3DAE8] transition-colors">
+              <div className="p-4 rounded-[14px] bg-[var(--bg-page)] border border-[var(--border)] space-y-1.5 hover:border-[var(--brand-primary)]/30 transition-colors">
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-bold text-[var(--navy)]">
+                  <span className="text-[14px] font-bold text-[var(--brand-primary)]">
                     {lang === 'bn' ? '৩. আসন্ন ইউটিলিটি বিল' : '3. Upcoming Scheduled Bills'}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] text-[11px] font-extrabold">
+                  <span className="px-2 py-0.5 rounded-full bg-[var(--brand-accent-soft)] text-[var(--brand-primary)] text-[11px] font-extrabold border border-[var(--brand-accent)]/40">
                     {formatMoney(2000)}
                   </span>
                 </div>
-                <p className="text-caption text-[var(--muted)] leading-relaxed">
+                <p className="text-caption text-[var(--text-muted)] leading-relaxed">
                   {lang === 'bn'
                     ? 'বেতন পাওয়ার পূর্বেই ডিপিডিসি বিদ্যুৎ ও ইন্টারনেট বিল পরিশোধের নির্ধারিত বাধ্যবাধকতা রয়েছে।'
                     : 'DPDC electricity and home broadband charges are scheduled before your salary arrives.'}
@@ -664,16 +927,16 @@ export const Dashboard: React.FC = () => {
               </div>
 
               {/* Tile 4 */}
-              <div className="p-4 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] space-y-1.5 hover:border-[#D3DAE8] transition-colors">
+              <div className="p-4 rounded-[14px] bg-[var(--bg-page)] border border-[var(--border)] space-y-1.5 hover:border-[var(--brand-primary)]/30 transition-colors">
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-bold text-[var(--navy)]">
+                  <span className="text-[14px] font-bold text-[var(--brand-primary)]">
                     {lang === 'bn' ? '৪. আয়ের দূরত্ব' : '4. Days Until Salary'}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-[var(--bg)] text-[var(--muted)] border border-[var(--line)] text-[11px] font-extrabold">
+                  <span className="px-2 py-0.5 rounded-full bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border)] text-[11px] font-extrabold">
                     {lang === 'bn' ? `${toBengaliNumber(profile.daysUntilNextIncome)} দিন বাকি` : `${profile.daysUntilNextIncome} days left`}
                   </span>
                 </div>
-                <p className="text-caption text-[var(--muted)] leading-relaxed">
+                <p className="text-caption text-[var(--text-muted)] leading-relaxed">
                   {lang === 'bn'
                     ? 'পরবর্তী বেতন আসার আগে অবশিষ্ট ব্যালেন্স দিয়ে দৈনিক মৌলিক চাহিদা পরিচালনা কঠিন হতে পারে।'
                     : 'Remaining wallet balance must stretch across daily necessities until the next paycheck.'}
@@ -683,17 +946,69 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column (40% ~ col-span-5) */}
+        {/* Right Column (col-span-5) */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Card 3: ক্যাটাগরি ব্যয় Donut Chart */}
+          {/* Card: স্মার্ট ক্যাশ-আউট সেভার উইজেট (Smart Cash-Out Fee Saver) */}
+          <div className="upay-card p-6 space-y-3.5 bg-gradient-to-br from-amber-50/60 to-white border-amber-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-[var(--brand-primary)]" />
+                <h3 className="text-[var(--brand-primary)]">
+                  {lang === 'bn' ? 'ক্যাশ-আউট ফি অপটিমাইজার' : 'Cash-Out Fee Optimizer'}
+                </h3>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-[var(--brand-accent)] text-[var(--brand-primary)] text-[11px] font-extrabold">
+                {lang === 'bn' ? '৳৩২০ সাশ্রয়' : 'Save ৳320'}
+              </span>
+            </div>
+
+            <p className="text-caption text-[var(--text-muted)] leading-relaxed">
+              {lang === 'bn'
+                ? 'এ মাসে এজেন্ট থেকে ক্যাশ-আউট ফি বাবদ আপনার ৩২০ টাকা ক্ষতি হয়েছে। কেনাকাটায় সরাসরি উপায় মার্চেন্ট কিউআর দিয়ে পেমেন্ট করলে এই ফি শূন্য (৳০) হতো।'
+                : 'You spent ৳320 on agent withdrawal fees. Paying merchants directly with upay QR costs ৳0.'}
+            </p>
+
+            <button
+              onClick={() => {
+                toggleMerchantQrOptimized();
+                notifyFinancial(
+                  !isMerchantQrOptimized
+                    ? (lang === 'bn' ? 'মার্চেন্ট কিউআর সাশ্রয় সক্রিয়' : 'QR Fee Optimizer Activated')
+                    : (lang === 'bn' ? 'স্বাভাবিক মোডে ফেরত' : 'Reverted'),
+                  !isMerchantQrOptimized
+                    ? (lang === 'bn' ? '৩২০ টাকা ফি ওয়ালেটে সাশ্রয় হয়েছে এবং ঝুঁকি ৬% কমেছে।' : '৳320 cash-out fee recovered. Risk reduced 6%.')
+                    : ''
+                );
+              }}
+              className={`w-full py-2.5 px-4 rounded-[14px] text-[13px] font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                isMerchantQrOptimized
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-[var(--brand-accent)] text-[var(--brand-primary)] hover:bg-[#EBB000]'
+              }`}
+            >
+              {isMerchantQrOptimized ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>{lang === 'bn' ? 'কিউআর পেমেন্ট সক্রিয় (৳৩২০ সুরক্ষিত)' : 'QR Optimizer Active (৳320 Saved)'}</span>
+                </>
+              ) : (
+                <>
+                  <QrCode className="w-4 h-4 text-[var(--brand-primary)]" />
+                  <span>{lang === 'bn' ? 'উপায় কিউআর মোড চালু করুন' : 'Switch to upay QR Mode'}</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Card: ক্যাটাগরি ব্যয় Donut Chart */}
           <div className="upay-card p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-[#0B1F4B]">
+              <h3 className="text-[var(--brand-primary)]">
                 {lang === 'bn' ? 'ক্যাটাগরি ব্যয়' : 'Category Spending'}
               </h3>
               <Link
                 to="/spending"
-                className="text-[13px] font-bold text-[var(--navy)] hover:text-[var(--yellow)] transition-colors"
+                className="text-[13px] font-bold text-[var(--brand-primary)] hover:text-[#B38600] transition-colors"
               >
                 {lang === 'bn' ? 'সব দেখুন' : 'View All'}
               </Link>
@@ -718,10 +1033,10 @@ export const Dashboard: React.FC = () => {
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#FFFFFF',
-                      border: '1px solid #E4E8F2',
-                      borderRadius: '10px',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '12px',
                       fontSize: '12px',
-                      color: '#0B1F4B',
+                      color: '#001C44',
                       fontFamily: lang === 'bn' ? 'Hind Siliguri, sans-serif' : 'Inter, sans-serif',
                     }}
                     formatter={(v: any) => [formatMoney(Number(v)), lang === 'bn' ? 'ব্যয়' : 'Spending']}
@@ -731,27 +1046,33 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {/* Donut Legend */}
-            <div className="space-y-2 border-t border-[var(--line)] pt-3">
+            <div className="space-y-2 border-t border-[var(--border)] pt-3">
               {categoryPieData.slice(0, 3).map((item) => (
                 <div key={item.name} className="flex items-center justify-between text-[13.5px]">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-[var(--ink)] font-medium">{item.name}</span>
+                    <span className="text-[var(--text-main)] font-medium">{item.name}</span>
                   </div>
-                  <span className="font-heading font-bold text-[var(--navy)]">{formatMoney(item.value)}</span>
+                  <span className="font-heading font-bold text-[var(--brand-primary)]">{formatMoney(item.value)}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Card 4: আসন্ন বিল ও চার্জ */}
+          {/* Card: আসন্ন বিল ও চার্জ */}
           <div className="upay-card p-6 space-y-3.5">
             <div className="flex items-center justify-between">
-              <h3 className="text-[#0B1F4B]">
+              <h3 className="text-[var(--brand-primary)]">
                 {lang === 'bn' ? 'আসন্ন বিল ও চার্জ' : 'Upcoming Obligations'}
               </h3>
-              <span className="px-2.5 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] text-[11px] font-bold">
-                {lang === 'bn' ? 'শীঘ্রই প্রদেয়' : 'Due Soon'}
+              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                isBillBufferLocked
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-[var(--brand-accent-soft)] text-[var(--brand-primary)] border border-[var(--brand-accent)]/30'
+              }`}>
+                {isBillBufferLocked
+                  ? (lang === 'bn' ? 'বাফার দ্বারা লকড' : 'Buffer Locked')
+                  : (lang === 'bn' ? 'শীঘ্রই প্রদেয়' : 'Due Soon')}
               </span>
             </div>
 
@@ -759,17 +1080,17 @@ export const Dashboard: React.FC = () => {
               {profile.upcomingExpenses.map((exp, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] flex items-center justify-between"
+                  className="p-3.5 rounded-[14px] bg-[var(--bg-page)] border border-[var(--border)] flex items-center justify-between"
                 >
                   <div className="space-y-0.5">
-                    <p className="text-[13.5px] font-bold text-[var(--navy)] leading-tight">{exp.name}</p>
-                    <p className="text-caption text-[var(--muted)]">
+                    <p className="text-[13.5px] font-bold text-[var(--brand-primary)] leading-tight">{exp.name}</p>
+                    <p className="text-caption text-[var(--text-muted)]">
                       {lang === 'bn'
                         ? `বাকি ${toBengaliNumber(exp.dueDays)} দিন · ${categoryNames[exp.category]?.bn || exp.category}`
                         : `Due in ${exp.dueDays} days · ${categoryNames[exp.category]?.en || exp.category}`}
                     </p>
                   </div>
-                  <span className="font-heading font-extrabold text-[15px] text-[var(--navy)]">
+                  <span className="font-heading font-extrabold text-[15px] text-[var(--brand-primary)]">
                     {formatMoney(exp.amount)}
                   </span>
                 </div>
@@ -777,42 +1098,41 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 5: লক্ষ্য অগ্রগতি */}
+          {/* Card: লক্ষ্য অগ্রগতি */}
           <div className="upay-card p-6 space-y-3.5">
             <div className="flex items-center justify-between">
-              <h3 className="text-[#0B1F4B]">
+              <h3 className="text-[var(--brand-primary)]">
                 {lang === 'bn' ? 'লক্ষ্য অগ্রগতি' : 'Goal Progress'}
               </h3>
               <Link
                 to="/goals"
-                className="text-[13px] font-bold text-[var(--navy)] hover:text-[var(--yellow)] transition-colors"
+                className="text-[13px] font-bold text-[var(--brand-primary)] hover:text-[#B38600] transition-colors"
               >
                 {lang === 'bn' ? 'পরিচালনা' : 'Manage'}
               </Link>
             </div>
 
             {goals.length > 0 && (
-              <div className="p-4 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] space-y-3">
+              <div className="p-4 rounded-[14px] bg-[var(--bg-page)] border border-[var(--border)] space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-bold text-[var(--navy)]">{goals[0].goal_name}</span>
-                  <span className="font-heading font-extrabold text-[14px] text-[var(--navy)]">
+                  <span className="text-[14px] font-bold text-[var(--brand-primary)]">{goals[0].goal_name}</span>
+                  <span className="font-heading font-extrabold text-[14px] text-[var(--brand-primary)]">
                     {lang === 'bn'
                       ? `${toBengaliNumber(Math.round((goals[0].current_amount / goals[0].target_amount) * 100))}%`
                       : `${Math.round((goals[0].current_amount / goals[0].target_amount) * 100)}%`}
                   </span>
                 </div>
 
-                {/* Yellow Progress Bar */}
-                <div className="w-full bg-[var(--line)] h-2.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[var(--border)] h-2.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-[var(--yellow)] h-full rounded-full transition-all duration-500"
+                    className="bg-[var(--brand-accent)] h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${Math.min(100, (goals[0].current_amount / goals[0].target_amount) * 100)}%`,
                     }}
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-caption text-[var(--muted)]">
+                <div className="flex items-center justify-between text-caption text-[var(--text-muted)]">
                   <span>
                     {lang === 'bn' ? 'জমা:' : 'Saved:'} {formatMoney(goals[0].current_amount)}
                   </span>
@@ -826,34 +1146,34 @@ export const Dashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* 5) AI ADVICE SECTION (Chat-style panel with suggestion chips and yellow send button) */}
+      {/* 5) AI ADVICE & BANGLA VOICE COACH SECTION */}
       <section className="upay-card p-6 sm:p-8 space-y-4" aria-label={lang === 'bn' ? 'এআই আর্থিক পরামর্শ' : 'AI Financial Advice'}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--line)] pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-[var(--navy)] text-[var(--yellow)] flex items-center justify-center font-bold text-sm shadow-xs">
-              <Bot className="w-4.5 h-4.5" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border)] pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[14px] bg-[var(--brand-primary)] text-[var(--brand-accent)] flex items-center justify-center font-bold text-sm shadow-2xs">
+              <Bot className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-[#0B1F4B]">
+                <h3 className="text-[var(--brand-primary)]">
                   {lang === 'bn' ? 'উপায় এআই আর্থিক পরামর্শক' : 'upay AI Financial Coach'}
                 </h3>
               </div>
-              <p className="text-caption text-[var(--muted)]">
+              <p className="text-caption text-[var(--text-muted)]">
                 {lang === 'bn'
-                  ? 'গুগল জেমিনাই এআই ভিত্তিক রিয়েল-টাইম সিদ্ধান্ত সহায়তা ও নগদ প্রবাহ পূর্বাভাস'
-                  : 'Real-time decision support & cash-flow forecasts powered by Google Gemini AI'}
+                  ? 'রিয়েল-টাইম সিদ্ধান্ত সহায়তা ও নগদ প্রবাহ পূর্বাভাস (বাংলা ভয়েস সাপোর্টসহ)'
+                  : 'Real-time proactive decision support & cash-flow forecasts with Bangla Voice'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200 shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{lang === 'bn' ? 'রিয়েল জেমিনাই এআই সক্রিয়' : 'Live Gemini AI Active'}</span>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11.5px] font-bold border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse" />
+              <span>{lang === 'bn' ? 'এআই সহকারী সক্রিয়' : 'AI Assistant Active'}</span>
             </div>
             <Link
               to="/coach"
-              className="text-[13px] font-bold text-[var(--navy)] hover:text-[var(--yellow)] flex items-center gap-1"
+              className="text-[13px] font-bold text-[var(--brand-primary)] hover:text-[#B38600] flex items-center gap-1"
             >
               <span>{lang === 'bn' ? 'সম্পূর্ণ চ্যাট' : 'Full Chat'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -861,40 +1181,40 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Suggestion Chips */}
+        {/* Suggestion Prompt Chips */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-          <span className="text-[12.5px] font-bold text-[var(--muted)] shrink-0">
+          <span className="text-[12.5px] font-bold text-[var(--text-muted)] shrink-0">
             {lang === 'bn' ? 'পরামর্শ চান:' : 'Quick Prompts:'}
           </span>
           <button
             onClick={handleGenerateDeepInsights}
             disabled={isAskingAI}
-            className="px-3 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 text-[12px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            className="px-3.5 py-1 rounded-full bg-[var(--brand-accent-soft)] hover:bg-[var(--brand-accent)]/30 border border-[var(--brand-accent)]/50 text-[var(--brand-primary)] text-[12px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 shadow-2xs"
           >
-            <Sparkles className="w-3 h-3 text-indigo-600" />
-            <span>{lang === 'bn' ? 'জেমিনাই ডিপ অ্যানালাইসিস' : 'Gemini Deep Analysis'}</span>
+            <Sparkles className="w-3 h-3 text-[var(--brand-primary)]" />
+            <span>{lang === 'bn' ? 'ডিপ অ্যানালাইসিস' : 'Deep Financial Analysis'}</span>
           </button>
           <button
             onClick={() => handleAskAI(lang === 'bn' ? 'আমার আর্থিক ঝুঁকি কেন ৮২%?' : 'Why is my shortage risk so high?')}
-            className="px-3 py-1 rounded-full bg-[var(--bg)] hover:bg-[var(--yellow-soft)] border border-[var(--line)] hover:border-[var(--yellow)] text-[var(--navy)] text-[12.5px] font-medium transition-all shrink-0 cursor-pointer"
+            className="px-3 py-1 rounded-full bg-[var(--bg-page)] hover:bg-[var(--brand-accent-soft)] border border-[var(--border)] hover:border-[var(--brand-accent)] text-[var(--brand-primary)] text-[12.5px] font-medium transition-all shrink-0 cursor-pointer"
           >
             {lang === 'bn' ? 'ঝুঁকি কেন ৮২%?' : 'Why 82% risk?'}
           </button>
           <button
             onClick={() => handleAskAI(lang === 'bn' ? 'খাবারে ১৫% খরচ কমালে কী লাভ হবে?' : 'What happens if I cut food spending by 15%?')}
-            className="px-3 py-1 rounded-full bg-[var(--bg)] hover:bg-[var(--yellow-soft)] border border-[var(--line)] hover:border-[var(--yellow)] text-[var(--navy)] text-[12.5px] font-medium transition-all shrink-0 cursor-pointer"
+            className="px-3 py-1 rounded-full bg-[var(--bg-page)] hover:bg-[var(--brand-accent-soft)] border border-[var(--border)] hover:border-[var(--brand-accent)] text-[var(--brand-primary)] text-[12.5px] font-medium transition-all shrink-0 cursor-pointer"
           >
             {lang === 'bn' ? 'খাবারে ১৫% কমালে কী হবে?' : 'What if 15% food cut?'}
           </button>
           <button
-            onClick={() => handleAskAI(lang === 'bn' ? 'আমি কি ল্যাপটপ কেনার লক্ষ্য পূরণ করতে পারব?' : 'Will I reach my laptop savings goal?')}
-            className="px-3 py-1 rounded-full bg-[var(--bg)] hover:bg-[var(--yellow-soft)] border border-[var(--line)] hover:border-[var(--yellow)] text-[var(--navy)] text-[12.5px] font-medium transition-all shrink-0 cursor-pointer"
+            onClick={() => handleAskAI(lang === 'bn' ? 'আমি ১০০০ টাকা জমাতে চাই, কী করব?' : 'I want to save 1000 tk, what plan?')}
+            className="px-3 py-1 rounded-full bg-[var(--bg-page)] hover:bg-[var(--brand-accent-soft)] border border-[var(--border)] hover:border-[var(--brand-accent)] text-[var(--brand-primary)] text-[12.5px] font-medium transition-all shrink-0 cursor-pointer"
           >
-            {lang === 'bn' ? 'ল্যাপটপের লক্ষ্য পূরণ হবে?' : 'Will I reach my goal?'}
+            {lang === 'bn' ? '১০০০ টাকা সঞ্চয় পরিকল্পনা' : 'Save 1000 Tk Plan'}
           </button>
         </div>
 
-        {/* Messages Feed */}
+        {/* Real-time Messages Feed with Voice Read-Aloud */}
         <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
           {adviceMessages.map((msg, i) => (
             <div
@@ -904,16 +1224,24 @@ export const Dashboard: React.FC = () => {
               <div
                 className={`max-w-[85%] rounded-[18px] px-4 py-2.5 text-[14px] leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-[var(--navy)] text-white rounded-tr-xs'
-                    : 'bg-[var(--bg)] text-[var(--ink)] border border-[var(--line)] rounded-tl-xs'
+                    ? 'bg-[var(--brand-primary)] text-white rounded-tr-xs'
+                    : 'bg-[var(--bg-page)] text-[var(--text-main)] border border-[var(--border)] rounded-tl-xs'
                 }`}
               >
                 {msg.role === 'assistant' && (
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <span className="inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-full bg-indigo-100/90 text-indigo-900 font-bold border border-indigo-200">
-                      <Sparkles className="w-2.5 h-2.5 text-indigo-600" />
-                      <span>{msg.model ? `Google Gemini (${msg.model})` : 'Google Gemini AI'}</span>
+                  <div className="flex items-center justify-between gap-1.5 mb-1.5 border-b border-[var(--border)]/60 pb-1">
+                    <span className="inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-full bg-[var(--brand-accent-soft)] text-[var(--brand-primary)] font-bold border border-[var(--brand-accent)]/30">
+                      <Sparkles className="w-2.5 h-2.5 text-[var(--brand-primary)]" />
+                      <span>{lang === 'bn' ? 'উপায় এআই' : 'upay AI'}</span>
                     </span>
+                    <button
+                      onClick={() => speakText(msg.text, lang)}
+                      className="p-1 rounded-md hover:bg-slate-200 text-[var(--brand-primary)] transition-colors cursor-pointer"
+                      title={lang === 'bn' ? 'ভয়েস শুনুন' : 'Read Aloud'}
+                      aria-label="Read message aloud"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 )}
                 <div className="whitespace-pre-line">{msg.text}</div>
@@ -922,14 +1250,21 @@ export const Dashboard: React.FC = () => {
           ))}
 
           {isAskingAI && (
-            <div className="flex gap-2.5 items-center text-caption text-[var(--muted)]">
-              <span className="w-2 h-2 rounded-full bg-[var(--yellow)] animate-pulse"></span>
-              <span>{lang === 'bn' ? 'গুগল জেমিনাই এআই উত্তর তৈরি করছে...' : 'Google Gemini AI is processing your financial data...'}</span>
+            <div className="flex gap-2.5 items-center text-caption text-[var(--text-muted)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--brand-accent)] animate-pulse"></span>
+              <span>{lang === 'bn' ? 'উপায় এআই উত্তর তৈরি করছে...' : 'upay AI is processing your financial data...'}</span>
+            </div>
+          )}
+
+          {isListening && (
+            <div className="flex gap-2.5 items-center p-3 rounded-[14px] bg-red-50 border border-red-200 text-red-800 text-[13px] font-bold animate-pulse">
+              <Mic className="w-4 h-4 text-red-600 animate-bounce" />
+              <span>{lang === 'bn' ? 'বাংলায় কথা বলুন... শুনছি...' : 'Listening in English... Speak now...'}</span>
             </div>
           )}
         </div>
 
-        {/* Input Row */}
+        {/* Input Row with Mic Voice Button & Send */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -941,16 +1276,36 @@ export const Dashboard: React.FC = () => {
             type="text"
             value={adviceInput}
             onChange={(e) => setAdviceInput(e.target.value)}
-            placeholder={lang === 'bn' ? 'আপনার বাজেট বা খরচ নিয়ে প্রশ্ন করুন...' : 'Ask about your budget, cash-outs, or savings...'}
-            className="flex-1 px-4 py-2.5 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] text-[14px] text-[var(--ink)] focus:border-[var(--navy)] focus:outline-none placeholder:text-[var(--muted)]"
+            placeholder={
+              isListening
+                ? (lang === 'bn' ? 'শুনছি... কথা বলুন...' : 'Listening...')
+                : (lang === 'bn' ? 'আপনার বাজেট বা খরচ নিয়ে প্রশ্ন করুন বা মাইকে বলুন...' : 'Ask about budget, bills, or speak into mic...')
+            }
+            className="flex-1 px-4 py-2.5 rounded-[14px] bg-[var(--bg-page)] border border-[var(--border)] text-[14px] text-[var(--text-main)] focus:border-[var(--brand-primary)] focus:outline-none placeholder:text-[var(--text-muted)]"
           />
+
+          {/* Voice Mic Button */}
+          <button
+            type="button"
+            onClick={handleToggleVoice}
+            className={`p-2.5 rounded-[14px] border transition-all cursor-pointer ${
+              isListening
+                ? 'bg-red-500 text-white border-red-600 ring-2 ring-red-300 animate-pulse'
+                : 'bg-[var(--bg-page)] hover:bg-[var(--brand-accent-soft)] text-[var(--brand-primary)] border-[var(--border)]'
+            }`}
+            title={lang === 'bn' ? 'মুখে বাংলায় কথা বলুন' : 'Speak into Microphone'}
+            aria-label={lang === 'bn' ? 'ভয়েস ইনপুট' : 'Voice Input'}
+          >
+            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+
           <button
             type="submit"
             disabled={isAskingAI || !adviceInput.trim()}
             className="btn-primary !px-4 !py-2.5 disabled:opacity-50"
             aria-label={lang === 'bn' ? 'বার্তা পাঠান' : 'Send message'}
           >
-            <Send className="w-4 h-4 text-[var(--navy)]" />
+            <Send className="w-4 h-4 text-[var(--brand-primary)]" />
             <span className="hidden sm:inline">{lang === 'bn' ? 'পাঠান' : 'Send'}</span>
           </button>
         </form>

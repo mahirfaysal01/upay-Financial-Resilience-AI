@@ -145,7 +145,7 @@ export function generateDeterministicCoachReply(query: string, ctx: AICoachConte
   ) {
     return lang === 'bn'
       ? `আসসালামু আলাইকুম ${ctx.name}! আমি উপায় এআই সহকারী। আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি? আপনার ওয়ালেট ব্যালেন্স, বাজেট, সঞ্চয়, কিংবা যেকোনো সাধারণ বা আর্থিক বিষয়ে আমাকে প্রশ্ন করতে পারেন।`
-      : `Hello ${ctx.name}! I am your upay AI assistant powered by Google Gemini. How can I help you today? You can ask me anything about your balance, budget, bills, or general financial questions!`;
+      : `Hello ${ctx.name}! I am your upay AI financial assistant. How can I help you today? You can ask me anything about your balance, budget, bills, or general financial questions!`;
   }
 
   if (q.includes('risk') || q.includes('ঝুঁকি') || q.includes('shortage') || q.includes('ঘাটতি')) {

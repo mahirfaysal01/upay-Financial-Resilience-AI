@@ -43,6 +43,8 @@ interface FinancialContextType {
   setIsHowItWorksOpen: (open: boolean) => void;
   isAddGoalModalOpen: boolean;
   setIsAddGoalModalOpen: (open: boolean) => void;
+  isResilienceModalOpen: boolean;
+  setIsResilienceModalOpen: (open: boolean) => void;
   addGoal: (goal: Omit<SavingsGoal, 'goal_id' | 'customer_id'>) => Promise<void>;
   lang: Language;
   setLang: (lang: Language) => void;
@@ -51,6 +53,16 @@ interface FinancialContextType {
   formatMoney: (amount: number) => string;
   isFirebaseConnected: boolean;
   firebaseProjectId: string;
+
+  // Next-Level Actionable Interventions
+  isBillBufferLocked: boolean;
+  toggleBillBuffer: () => void;
+  isDailySpendCapped: boolean;
+  toggleDailySpendCap: () => void;
+  isEmergencyBufferActive: boolean;
+  toggleEmergencyBuffer: () => void;
+  isMerchantQrOptimized: boolean;
+  toggleMerchantQrOptimized: () => void;
 }
 
 const FinancialContext = createContext<FinancialContextType | undefined>(undefined);
@@ -69,10 +81,26 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);
+  const [isResilienceModalOpen, setIsResilienceModalOpen] = useState(false);
+
+  // Next-Level Interventions State
+  const [isBillBufferLocked, setIsBillBufferLocked] = useState(false);
+  const [isDailySpendCapped, setIsDailySpendCapped] = useState(false);
+  const [isEmergencyBufferActive, setIsEmergencyBufferActive] = useState(false);
+  const [isMerchantQrOptimized, setIsMerchantQrOptimized] = useState(false);
+
   const [customGoals, setCustomGoals] = useState<Record<string, SavingsGoal[]>>({});
   const [firebaseLiveGoals, setFirebaseLiveGoals] = useState<Record<string, SavingsGoal[]>>({});
   const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(true);
   const firebaseProjectId = "upay-financial-resilience-ai";
+
+  // Reset or adapt interventions on customer switch
+  useEffect(() => {
+    setIsBillBufferLocked(false);
+    setIsDailySpendCapped(false);
+    setIsEmergencyBufferActive(false);
+    setIsMerchantQrOptimized(false);
+  }, [selectedCustomerId]);
 
   // Sync document language attribute and font stylesheet
   useEffect(() => {
@@ -97,7 +125,6 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         setIsFirebaseConnected(true);
       },
       () => {
-        // Fallback to local persistence gracefully if offline
         setIsFirebaseConnected(false);
       }
     );
@@ -111,6 +138,11 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
     setLang((prev) => (prev === 'bn' ? 'en' : 'bn'));
   };
 
+  const toggleBillBuffer = () => setIsBillBufferLocked((prev) => !prev);
+  const toggleDailySpendCap = () => setIsDailySpendCapped((prev) => !prev);
+  const toggleEmergencyBuffer = () => setIsEmergencyBufferActive((prev) => !prev);
+  const toggleMerchantQrOptimized = () => setIsMerchantQrOptimized((prev) => !prev);
+
   const t = useMemo(() => {
     return translations[lang];
   }, [lang]);
@@ -122,21 +154,81 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
     );
   }, [selectedCustomerId]);
 
-  const profile = useMemo(() => {
+  const baseProfile = useMemo(() => {
     return calculateCustomerFinancialProfile(selectedCustomerId);
   }, [selectedCustomerId]);
+
+  // Dynamic profile adjusted by active interventions
+  const profile = useMemo(() => {
+    let adjustedBalance = baseProfile.currentBalance;
+    let adjustedDailySpending = baseProfile.averageDailySpending;
+
+    if (isEmergencyBufferActive) {
+      adjustedBalance += 1000;
+    }
+    if (isMerchantQrOptimized) {
+      adjustedBalance += 320; // Savings from avoided agent cash-out fees
+    }
+    if (isDailySpendCapped) {
+      adjustedDailySpending = Math.min(adjustedDailySpending, 290);
+    }
+
+    return {
+      ...baseProfile,
+      currentBalance: adjustedBalance,
+      averageDailySpending: adjustedDailySpending,
+    };
+  }, [baseProfile, isEmergencyBufferActive, isMerchantQrOptimized, isDailySpendCapped]);
 
   const transactions = useMemo(() => {
     return getTransactionsByCustomerId(selectedCustomerId);
   }, [selectedCustomerId]);
 
-  const forecast = useMemo(() => {
+  const baseForecast = useMemo(() => {
     return forecastCashFlow(profile);
   }, [profile]);
 
-  const risk = useMemo(() => {
+  // Dynamic forecast with adjusted month-end balances
+  const forecast = useMemo(() => {
+    let bonusAtEnd = 0;
+    if (isEmergencyBufferActive) bonusAtEnd += 1000;
+    if (isMerchantQrOptimized) bonusAtEnd += 320;
+    if (isDailySpendCapped) bonusAtEnd += 750; // cumulative daily savings
+
+    const adjustedDaily = baseForecast.dailyProjections.map((p, idx) => ({
+      ...p,
+      projectedBalance: p.projectedBalance + Math.round((bonusAtEnd * (idx + 1)) / 14),
+    }));
+
+    return {
+      ...baseForecast,
+      monthEndForecast: baseForecast.monthEndForecast + bonusAtEnd,
+      dailyProjections: adjustedDaily,
+    };
+  }, [baseForecast, isEmergencyBufferActive, isMerchantQrOptimized, isDailySpendCapped]);
+
+  const baseRisk = useMemo(() => {
     return calculateShortageRisk(profile);
   }, [profile]);
+
+  // Dynamic risk calculation reflecting real-time interventions
+  const risk = useMemo(() => {
+    let reduction = 0;
+    if (isBillBufferLocked) reduction += 0.14; // Utility bills protected
+    if (isDailySpendCapped) reduction += 0.16; // Spend cap enforced
+    if (isEmergencyBufferActive) reduction += 0.10; // Emergency buffer available
+    if (isMerchantQrOptimized) reduction += 0.06; // Cash-out fee avoided
+
+    const newProbability = Math.max(0.12, baseRisk.probability - reduction);
+    const newRiskLevel: 'HIGH' | 'MODERATE' | 'LOW' =
+      newProbability > 0.6 ? 'HIGH' : newProbability > 0.3 ? 'MODERATE' : 'LOW';
+
+    return {
+      ...baseRisk,
+      probability: newProbability,
+      riskLevel: newRiskLevel,
+    };
+  }, [baseRisk, isBillBufferLocked, isDailySpendCapped, isEmergencyBufferActive, isMerchantQrOptimized]);
 
   const anomalies = useMemo(() => {
     return detectSpendingAnomalies(profile);
@@ -167,13 +259,11 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
       customer_id: selectedCustomerId,
     };
 
-    // Optimistic local update
     setCustomGoals((prev) => ({
       ...prev,
       [selectedCustomerId]: [...(prev[selectedCustomerId] || []), newGoal],
     }));
 
-    // Real-time write to Firebase Firestore
     try {
       await addGoalToFirebase(newGoal);
       setIsFirebaseConnected(true);
@@ -206,6 +296,8 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         setIsHowItWorksOpen,
         isAddGoalModalOpen,
         setIsAddGoalModalOpen,
+        isResilienceModalOpen,
+        setIsResilienceModalOpen,
         addGoal,
         lang,
         setLang,
@@ -214,6 +306,16 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         formatMoney,
         isFirebaseConnected,
         firebaseProjectId,
+
+        // Actions
+        isBillBufferLocked,
+        toggleBillBuffer,
+        isDailySpendCapped,
+        toggleDailySpendCap,
+        isEmergencyBufferActive,
+        toggleEmergencyBuffer,
+        isMerchantQrOptimized,
+        toggleMerchantQrOptimized,
       }}
     >
       {children}

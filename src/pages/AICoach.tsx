@@ -4,9 +4,13 @@ import {
   Send,
   User,
   ShieldCheck,
+  Mic,
+  MicOff,
+  Volume2,
 } from 'lucide-react';
 import { useFinancial } from '../context/FinancialContext';
 import { buildCoachContext, askAICoach } from '../services/aiCoachEngine';
+import { startSpeechListening, speakText } from '../utils/speechVoiceHelper';
 
 interface Message {
   id: string;
@@ -21,11 +25,13 @@ export const AICoach: React.FC = () => {
 
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechActiveObj, setSpeechActiveObj] = useState<{ stop: () => void } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const initialGreeting = lang === 'bn'
-    ? `আসসালামু আলাইকুম ${customer.name}! আমি উপায় এআই সহকারী, গুগল জেমিনাই দ্বারা চালিত। আজ আমি আপনাকে কীভাবে সহায়তা করতে পারি? আপনার ওয়ালেট ব্যালেন্স, বাজেট, সঞ্চয়, কিংবা যেকোনো আর্থিক প্রশ্ন আমাকে নির্দ্বিধায় জিজ্ঞাসা করতে পারেন।`
-    : `Hello ${customer.name}! I am your upay AI assistant powered by Google Gemini. How can I help you today? You can ask me anything about your wallet balance, bills, savings goals, or general financial questions!`;
+    ? `আসসালামু আলাইকুম ${customer.name}! আমি উপায় এআই সহকারী। আজ আমি আপনাকে কীভাবে সহায়তা করতে পারি? আপনার ওয়ালেট ব্যালেন্স, বাজেট, সঞ্চয়, কিংবা যেকোনো আর্থিক প্রশ্ন আমাকে নির্দ্বিধায় জিজ্ঞাসা করতে পারেন।`
+    : `Hello ${customer.name}! I am your upay AI financial assistant. How can I help you today? You can ask me anything about your wallet balance, bills, savings goals, or general financial questions!`;
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -95,6 +101,40 @@ export const AICoach: React.FC = () => {
     }
   };
 
+  const handleToggleVoice = () => {
+    if (isListening) {
+      speechActiveObj?.stop();
+      setIsListening(false);
+      setSpeechActiveObj(null);
+      return;
+    }
+
+    setIsListening(true);
+    const listener = startSpeechListening(
+      lang,
+      (transcript) => {
+        setInput(transcript);
+        setIsListening(false);
+        setSpeechActiveObj(null);
+      },
+      (err) => {
+        console.warn('Voice error', err);
+        setIsListening(false);
+        setSpeechActiveObj(null);
+      },
+      () => {
+        setIsListening(false);
+        setSpeechActiveObj(null);
+      }
+    );
+
+    if (listener) {
+      setSpeechActiveObj(listener);
+    } else {
+      setIsListening(false);
+    }
+  };
+
   const suggestedPrompts = lang === 'bn'
     ? [
         'হ্যালো! আমাকে কীভাবে সাহায্য করতে পারো?',
@@ -119,9 +159,11 @@ export const AICoach: React.FC = () => {
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] text-[12px] font-bold">
             জেনারেটিভ এআই অনুবাদক স্তর
           </div>
-          <h2 className="text-[#0B1F4B] mt-2">উপায় এআই আর্থিক পরামর্শক</h2>
+          <h2 className="text-[var(--brand-primary)] mt-2">উপায় এআই আর্থিক পরামর্শক</h2>
           <p className="text-caption text-[var(--muted)] max-w-2xl mt-0.5">
-            গুগল জেমিনাই ৩.৮ ফ্ল্যাশ দ্বারা চালিত। আপনার ক্যাশ-ফ্লো ও ঝুঁকির জটিল উপাত্তকে সহজ ও মানবিক ভাষায় বুঝিয়ে দেয়।
+            {lang === 'bn'
+              ? 'আপনার ক্যাশ-ফ্লো ও ঝুঁকির জটিল উপাত্তকে সহজ ও বাস্তবমুখী ভাষায় বুঝিয়ে দেয়।'
+              : 'Translates complex cash-flow and liquidity risks into clear, proactive guidance.'}
           </p>
         </div>
 
@@ -220,15 +262,22 @@ export const AICoach: React.FC = () => {
                     }`}
                   >
                     <span>{msg.timestamp}</span>
-                    {msg.source && (
-                      <span className={`font-mono text-[9px] px-2 py-0.5 rounded-full font-bold ${
-                        msg.source.includes('gemini')
-                          ? 'bg-indigo-50 border border-indigo-200 text-indigo-700'
-                          : 'bg-white border border-[var(--line)] text-[var(--muted)]'
-                      }`}>
-                        {msg.source.includes('gemini') ? `✨ Google ${msg.source}` : '⚡ Deterministic Fallback'}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-semibold text-[var(--muted)]">
+                        {lang === 'bn' ? 'উপায় এআই' : 'upay AI'}
                       </span>
-                    )}
+                      {msg.role === 'assistant' && (
+                        <button
+                          type="button"
+                          onClick={() => speakText(msg.text, lang)}
+                          className="p-1 rounded hover:bg-slate-200 text-[var(--brand-primary)] transition-colors cursor-pointer"
+                          title={lang === 'bn' ? 'ভয়েস শুনুন' : 'Read Aloud'}
+                          aria-label="Read message aloud"
+                        >
+                          <Volume2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -247,8 +296,14 @@ export const AICoach: React.FC = () => {
                 </div>
                 <div className="p-3.5 rounded-[18px] bg-[var(--bg)] border border-[var(--line)] text-caption text-[var(--muted)] flex items-center gap-2 font-medium">
                   <span className="inline-block w-2 h-2 rounded-full bg-[var(--yellow)] animate-pulse"></span>
-                  <span>জেমিনাই দিয়ে তথ্য বিশ্লেষণ করা হচ্ছে...</span>
+                  <span>{lang === 'bn' ? 'তথ্য বিশ্লেষণ করা হচ্ছে...' : 'Analyzing financial data...'}</span>
                 </div>
+              </div>
+            )}
+            {isListening && (
+              <div className="flex gap-2.5 items-center p-3 rounded-[14px] bg-red-50 border border-red-200 text-red-800 text-[13px] font-bold animate-pulse">
+                <Mic className="w-4 h-4 text-red-600 animate-bounce" />
+                <span>{lang === 'bn' ? 'বাংলায় কথা বলুন... শুনছি...' : 'Listening in English... Speak now...'}</span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -267,9 +322,29 @@ export const AICoach: React.FC = () => {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="আপনার ঝুঁকি, অস্বাভাবিক খরচ বা সঞ্চয় পরিকল্পনা নিয়ে প্রশ্ন করুন..."
+                placeholder={
+                  isListening
+                    ? (lang === 'bn' ? 'শুনছি... মুখে কথা বলুন...' : 'Listening...')
+                    : (lang === 'bn' ? 'আপনার ঝুঁকি বা খরচ নিয়ে প্রশ্ন করুন বা মাইকে বলুন...' : 'Ask question or speak into mic...')
+                }
                 className="flex-1 px-4 py-2.5 rounded-[14px] bg-white border border-[var(--line)] text-[14px] text-[var(--ink)] focus:border-[var(--navy)] focus:outline-none placeholder:text-[var(--muted)]"
               />
+
+              {/* Voice Mic Button */}
+              <button
+                type="button"
+                onClick={handleToggleVoice}
+                className={`p-2.5 rounded-[14px] border transition-all cursor-pointer ${
+                  isListening
+                    ? 'bg-red-500 text-white border-red-600 ring-2 ring-red-300 animate-pulse'
+                    : 'bg-white hover:bg-[var(--brand-accent-soft)] text-[var(--brand-primary)] border-[var(--line)]'
+                }`}
+                title={lang === 'bn' ? 'মুখে বাংলায় কথা বলুন' : 'Speak into Microphone'}
+                aria-label={lang === 'bn' ? 'ভয়েস ইনপুট' : 'Voice Input'}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
