@@ -1,0 +1,11 @@
+merchant_id,merchant_name,category,channel,location
+M101,Takeout Dhanmondi,Food,qr,Dhanmondi
+M102,Sultan Dine Kacchi,Food,app,Baily Road
+M103,Madchef Burgers,Food,qr,Banani
+M104,DPDC Utility Billing,Bills,app,Dhaka
+M105,Yellow Fashion,Shopping,qr,Dhanmondi
+M106,Shwapno Super Shop,Food,qr,Gulshan
+M107,Star Cineplex Lounge,Entertainment,app,Panthapath
+M108,Apex Footwear,Shopping,qr,Chattogram
+M109,Square Hospitals Diagnostic,Healthcare,qr,Panthapath
+M110,upay Agent Point 042,Cash-out,agent,Dhanmondi

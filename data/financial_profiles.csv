@@ -1,0 +1,8 @@
+customer_id,monthly_income,average_monthly_spending,average_daily_spending,savings_rate,food_spending_ratio,discretionary_spending_ratio,cash_out_ratio,spending_volatility,income_volatility,average_month_end_balance,shortage_risk_probability,risk_level
+C001,30000,26500,883,0.117,0.342,0.185,0.310,HIGH,LOW,850,0.82,HIGH
+C002,48000,28500,950,0.406,0.185,0.110,0.065,LOW,LOW,24500,0.09,LOW
+C003,38000,34200,1140,0.100,0.220,0.420,0.170,HIGH,LOW,1200,0.68,HIGH
+C004,52000,32000,1067,0.385,0.190,0.090,0.080,LOW,LOW,16800,0.14,LOW
+C005,42000,31500,1050,0.250,0.210,0.140,0.120,MODERATE,HIGH,4500,0.54,MODERATE
+C006,36000,31200,1040,0.133,0.200,0.130,0.110,HIGH,LOW,2100,0.76,HIGH
+C007,50000,38500,1283,0.230,0.160,0.100,0.440,MODERATE,LOW,8900,0.38,MODERATE

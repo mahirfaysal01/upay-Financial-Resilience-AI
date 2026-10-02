@@ -1,0 +1,8 @@
+customer_id,name,age,occupation,monthly_income,income_frequency,location,financial_profile
+C001,Rahim Hasan,24,Junior Executive / Student,30000,Monthly,Dhaka,Month-End Spender
+C002,Nusrat Jahan,28,Software QA Engineer,48000,Monthly,Dhaka,Stable Saver
+C003,Tanvir Ahmed,26,Brand Designer,38000,Monthly,Chattogram,High Discretionary Spender
+C004,Sadia Rahman,29,Bank Officer,52000,Monthly,Sylhet,Goal-Oriented Saver
+C005,Arif Hossain,31,Freelance Fullstack Developer,42000,Irregular,Rajshahi,Irregular Income User
+C006,Farhan Kabir,27,Digital Marketer,36000,Monthly,Dhaka,Sudden Spending User
+C007,Mehedi Zaman,33,Retail Shop Owner,50000,Monthly,Khulna,Cash-Out Heavy User

@@ -1,0 +1,6 @@
+{
+  "name": "upay Financial Resilience AI",
+  "description": "Know your financial future before it becomes a problem. AI-powered financial decision-support and cash-flow resilience prototype for upay digital financial services.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

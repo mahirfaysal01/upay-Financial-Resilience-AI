@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --navy: #0B1F4B;
+    --navy-2: #12306F;
+    --yellow: #FFC20E;
+    --yellow-soft: #FFF3C4;
+    --bg: #F6F8FC;
+    --card: #FFFFFF;
+    --ink: #0E1630;
+    --muted: #5B6685;
+    --line: #E4E8F2;
+    --danger: #E5484D;
+    --danger-soft: #FDECEC;
+    --success: #1FA971;
+
+    --font-heading: 'Anek Bangla', 'Hind Siliguri', sans-serif;
+    --font-body: 'Hind Siliguri', 'Anek Bangla', sans-serif;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15.5px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, h4, .font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    font-size: clamp(30px, 4.6vw, 52px);
+    line-height: 1.25;
+    font-weight: 800;
+  }
+
+  h2 {
+    font-size: 22px;
+    line-height: 1.35;
+    font-weight: 700;
+  }
+
+  h3 {
+    font-size: 17px;
+    line-height: 1.4;
+    font-weight: 700;
+  }
+
+  .text-body {
+    font-size: 15.5px;
+    line-height: 1.6;
+  }
+
+  .text-caption {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+/* Card elevation and border rules */
+.upay-card {
+  background-color: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(11, 31, 75, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.upay-card:hover {
+  border-color: #D3DAE8;
+  box-shadow: 0 4px 14px rgba(11, 31, 75, 0.06);
+}
+
+.upay-card-danger {
+  background-color: var(--danger-soft);
+  border: 1px solid rgba(229, 72, 77, 0.25);
+  border-radius: 20px;
+}
+
+/* Standard Button Styles */
+.btn-primary {
+  background-color: var(--yellow);
+  color: var(--navy);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  border-radius: 14px;
+  padding: 10px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.15s ease;
+}
+
+.btn-primary:hover {
+  background-color: #EBB000;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.btn-secondary-white {
+  background-color: transparent;
+  color: #FFFFFF;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  border-radius: 14px;
+  padding: 10px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-secondary-white:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #FFFFFF;
+}
+
+.btn-secondary-white:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* Circular Gauge Animation */
+@keyframes drawArc {
+  from {
+    stroke-dashoffset: 283;
+  }
+}
+
+.gauge-arc-anim {
+  animation: drawArc 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gauge-arc-anim {
+    animation: none;
+  }
+  .btn-primary, .btn-secondary-white {
+    transition: none;
+    transform: none !important;
+  }
+}
+
+/* Custom Clean Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C9D2E3;
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A4B2CE;
+}
