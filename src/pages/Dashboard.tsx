@@ -33,7 +33,7 @@ import {
 } from 'recharts';
 import { useFinancial } from '../context/FinancialContext';
 import { useNotification } from '../context/NotificationContext';
-import { askAICoach, buildCoachContext } from '../services/aiCoachEngine';
+import { askAICoach, buildCoachContext, fetchGeminiDeepInsights } from '../services/aiCoachEngine';
 import { toBengaliNumber } from '../utils/translations';
 import { exportMonthlyFinancialDataCSV } from '../utils/exportFinancialData';
 
@@ -43,7 +43,9 @@ export const Dashboard: React.FC = () => {
 
   // AI Advice Chat state in dashboard
   const [adviceInput, setAdviceInput] = useState('');
-  const [adviceMessages, setAdviceMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([]);
+  const [adviceMessages, setAdviceMessages] = useState<
+    Array<{ role: 'user' | 'assistant'; text: string; source?: string; model?: string }>
+  >([]);
   const [isAskingAI, setIsAskingAI] = useState(false);
 
   // CSV Data Export state
@@ -134,8 +136,64 @@ export const Dashboard: React.FC = () => {
       const instruction = lang === 'bn'
         ? `[বাংলায় সংক্ষিপ্ত ও ব্যবহারিক পরামর্শ দিন]: ${q}`
         : `[Provide concise, actionable advice in English with ৳ figures]: ${q}`;
-      const res = await askAICoach(instruction, coachContext, adviceMessages);
-      setAdviceMessages((prev) => [...prev, { role: 'assistant', text: res.text }]);
+      const res = await askAICoach(instruction, coachContext, adviceMessages, lang);
+      setAdviceMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: res.text,
+          source: res.source,
+          model: res.model,
+        },
+      ]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsAskingAI(false);
+    }
+  };
+
+  const handleGenerateDeepInsights = async () => {
+    if (isAskingAI) return;
+    setIsAskingAI(true);
+    setAdviceMessages((prev) => [
+      ...prev,
+      {
+        role: 'user',
+        text: lang === 'bn' ? 'আমার জন্য বিস্তারিত গুগল জেমিনাই রেজিলিয়েন্স অ্যানালাইসিস দিন।' : 'Generate comprehensive Google Gemini financial resilience analysis for me.',
+      },
+    ]);
+
+    try {
+      const coachContext = buildCoachContext(profile, risk, forecast.monthEndForecast, anomalies);
+      const res = await fetchGeminiDeepInsights(coachContext, lang);
+      if (res && res.text) {
+        setAdviceMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            text: res.text!,
+            source: res.source,
+            model: res.source,
+          },
+        ]);
+      } else {
+        const fallback = await askAICoach(
+          lang === 'bn' ? 'আমার আর্থিক ঝুঁকি পর্যালোচনা দিন' : 'Review my financial resilience posture',
+          coachContext,
+          adviceMessages,
+          lang
+        );
+        setAdviceMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            text: fallback.text,
+            source: fallback.source,
+            model: fallback.model,
+          },
+        ]);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -775,27 +833,35 @@ export const Dashboard: React.FC = () => {
       <section className="upay-card p-6 sm:p-8 space-y-4" aria-label={lang === 'bn' ? 'এআই আর্থিক পরামর্শ' : 'AI Financial Advice'}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--line)] pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-[var(--navy)] text-[var(--yellow)] flex items-center justify-center font-bold text-sm">
-              <Bot className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-full bg-[var(--navy)] text-[var(--yellow)] flex items-center justify-center font-bold text-sm shadow-xs">
+              <Bot className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h3 className="text-[#0B1F4B]">
-                {lang === 'bn' ? 'উপায় এআই পরামর্শক' : 'upay AI Financial Coach'}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-[#0B1F4B]">
+                  {lang === 'bn' ? 'উপায় এআই আর্থিক পরামর্শক' : 'upay AI Financial Coach'}
+                </h3>
+              </div>
               <p className="text-caption text-[var(--muted)]">
                 {lang === 'bn'
-                  ? 'আপনার ডেটাসেটের ভিত্তিতে বাস্তবসম্মত ও নিরপেক্ষ আর্থিক পরামর্শ'
-                  : 'Grounded, non-judgmental guidance based on your wallet patterns'}
+                  ? 'গুগল জেমিনাই এআই ভিত্তিক রিয়েল-টাইম সিদ্ধান্ত সহায়তা ও নগদ প্রবাহ পূর্বাভাস'
+                  : 'Real-time decision support & cash-flow forecasts powered by Google Gemini AI'}
               </p>
             </div>
           </div>
-          <Link
-            to="/coach"
-            className="text-[13px] font-bold text-[var(--navy)] hover:text-[var(--yellow)] flex items-center gap-1 self-start sm:self-auto"
-          >
-            <span>{lang === 'bn' ? 'সম্পূর্ণ চ্যাটে যান' : 'Open Full Chat'}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{lang === 'bn' ? 'রিয়েল জেমিনাই এআই সক্রিয়' : 'Live Gemini AI Active'}</span>
+            </div>
+            <Link
+              to="/coach"
+              className="text-[13px] font-bold text-[var(--navy)] hover:text-[var(--yellow)] flex items-center gap-1"
+            >
+              <span>{lang === 'bn' ? 'সম্পূর্ণ চ্যাট' : 'Full Chat'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
         {/* Suggestion Chips */}
@@ -803,6 +869,14 @@ export const Dashboard: React.FC = () => {
           <span className="text-[12.5px] font-bold text-[var(--muted)] shrink-0">
             {lang === 'bn' ? 'পরামর্শ চান:' : 'Quick Prompts:'}
           </span>
+          <button
+            onClick={handleGenerateDeepInsights}
+            disabled={isAskingAI}
+            className="px-3 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 text-[12px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 shadow-2xs"
+          >
+            <Sparkles className="w-3 h-3 text-indigo-600" />
+            <span>{lang === 'bn' ? 'জেমিনাই ডিপ অ্যানালাইসিস' : 'Gemini Deep Analysis'}</span>
+          </button>
           <button
             onClick={() => handleAskAI(lang === 'bn' ? 'আমার আর্থিক ঝুঁকি কেন ৮২%?' : 'Why is my shortage risk so high?')}
             className="px-3 py-1 rounded-full bg-[var(--bg)] hover:bg-[var(--yellow-soft)] border border-[var(--line)] hover:border-[var(--yellow)] text-[var(--navy)] text-[12.5px] font-medium transition-all shrink-0 cursor-pointer"
@@ -824,7 +898,7 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Messages Feed */}
-        <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
           {adviceMessages.map((msg, i) => (
             <div
               key={i}
@@ -837,7 +911,15 @@ export const Dashboard: React.FC = () => {
                     : 'bg-[var(--bg)] text-[var(--ink)] border border-[var(--line)] rounded-tl-xs'
                 }`}
               >
-                {msg.text}
+                {msg.role === 'assistant' && (
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className="inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-full bg-indigo-100/90 text-indigo-900 font-bold border border-indigo-200">
+                      <Sparkles className="w-2.5 h-2.5 text-indigo-600" />
+                      <span>{msg.model ? `Google Gemini (${msg.model})` : 'Google Gemini AI'}</span>
+                    </span>
+                  </div>
+                )}
+                <div className="whitespace-pre-line">{msg.text}</div>
               </div>
             </div>
           ))}
@@ -845,7 +927,7 @@ export const Dashboard: React.FC = () => {
           {isAskingAI && (
             <div className="flex gap-2.5 items-center text-caption text-[var(--muted)]">
               <span className="w-2 h-2 rounded-full bg-[var(--yellow)] animate-pulse"></span>
-              <span>{lang === 'bn' ? 'এআই উত্তর তৈরি করছে...' : 'AI is analyzing your finances...'}</span>
+              <span>{lang === 'bn' ? 'গুগল জেমিনাই এআই উত্তর তৈরি করছে...' : 'Google Gemini AI is processing your financial data...'}</span>
             </div>
           )}
         </div>

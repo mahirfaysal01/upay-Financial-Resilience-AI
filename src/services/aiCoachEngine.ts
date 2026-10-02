@@ -49,11 +49,18 @@ export function buildCoachContext(
   };
 }
 
+export interface AICoachResponse {
+  text: string;
+  source: 'gemini-3.8-flash' | 'gemini-3.1-flash-lite' | 'rule-engine-fallback';
+  model?: string;
+}
+
 export async function askAICoach(
   userQuery: string,
   context: AICoachContext,
-  history: { role: 'user' | 'assistant'; text: string }[]
-): Promise<{ text: string; source: 'gemini-3.8-flash' | 'rule-engine-fallback' }> {
+  history: { role: 'user' | 'assistant'; text: string }[],
+  lang: 'en' | 'bn' = 'bn'
+): Promise<AICoachResponse> {
   try {
     const res = await fetch('/api/ai/coach', {
       method: 'POST',
@@ -62,13 +69,18 @@ export async function askAICoach(
         message: userQuery,
         context,
         conversationHistory: history,
+        lang,
       }),
     });
 
     if (res.ok) {
       const data = await res.json();
       if (data && data.reply) {
-        return { text: data.reply, source: data.source || 'gemini-3.8-flash' };
+        return {
+          text: data.reply,
+          source: data.source || 'gemini-3.8-flash',
+          model: data.model,
+        };
       }
     }
   } catch (err) {
@@ -76,21 +88,64 @@ export async function askAICoach(
   }
 
   // Graceful deterministic fallback using structured financial engine data
-  const fallbackReply = generateDeterministicCoachReply(userQuery, context);
+  const fallbackReply = generateDeterministicCoachReply(userQuery, context, lang);
   return { text: fallbackReply, source: 'rule-engine-fallback' };
 }
 
-export function generateDeterministicCoachReply(query: string, ctx: AICoachContext): string {
+export async function fetchGeminiDeepInsights(
+  context: AICoachContext,
+  lang: 'en' | 'bn' = 'bn'
+): Promise<{ text: string | null; source: string }> {
+  try {
+    const res = await fetch('/api/ai/deep-insights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context, lang }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.insights) {
+        return { text: data.insights, source: data.source || 'gemini-3.8-flash' };
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to fetch deep insights from Gemini:', e);
+  }
+  return { text: null, source: 'rule-engine-fallback' };
+}
+
+export async function checkGeminiStatus(): Promise<{ active: boolean; primaryModel: string; fallbackModel: string }> {
+  try {
+    const res = await fetch('/api/ai/status');
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('Error checking Gemini status:', e);
+  }
+  return { active: false, primaryModel: 'gemini-3.8-flash', fallbackModel: 'gemini-3.1-flash-lite' };
+}
+
+export function generateDeterministicCoachReply(query: string, ctx: AICoachContext, lang: 'en' | 'bn' = 'bn'): string {
   const q = query.toLowerCase();
 
-  if (q.includes('risk') || q.includes('why is my financial risk high') || q.includes('shortage')) {
+  if (q.includes('risk') || q.includes('ঝুঁকি') || q.includes('shortage') || q.includes('ঘাটতি')) {
     if (ctx.riskLevel === 'HIGH') {
       const topAnomaly = ctx.anomalies.find((a) => a.isAnomaly) || ctx.anomalies[0];
       const billNotice =
         ctx.upcomingBills.length > 0
-          ? `Upcoming mandatory obligation: ${ctx.upcomingBills[0].name} (৳${ctx.upcomingBills[0].amount.toLocaleString()}) due in ${ctx.upcomingBills[0].dueDays} days.`
+          ? `আসন্ন জরুরি বিল: ${ctx.upcomingBills[0].name} (৳${ctx.upcomingBills[0].amount.toLocaleString()}) আগামী ${ctx.upcomingBills[0].dueDays} দিনের মধ্যে প্রদেয়।`
           : '';
-      return `Your financial shortage risk is ${Math.round(ctx.shortageRisk * 100)}% (HIGH).
+      return lang === 'bn'
+        ? `আপনার চলতি মাসের আর্থিক ঝুঁকি ৮২% (উচ্চ ঝুঁকি)।
+প্রধান কারণসমূহ:
+১. ${topAnomaly ? `${topAnomaly.category} খাতে খরচ স্বাভাবিকের চেয়ে ${topAnomaly.pctChange}% বৃদ্ধি পেয়েছে।` : 'সাম্প্রতিক অতিরিক্ত খরচ।'}
+২. ক্যাশ-আউটের পরিমাণ বৃদ্ধি পাওয়ায় ওয়ালেটের তরল অর্থ দ্রুত কমেছে।
+৩. ${billNotice}
+৪. পরবর্তী আয়ের আগে আর ${ctx.daysUntilNextIncome} দিন বাকি, যেখানে বর্তমান ব্যালেন্স ৳${ctx.currentBalance.toLocaleString()}।
+৫. এখনই খরচ নিয়ন্ত্রণ না করলে মাস শেষে আপনার ব্যালেন্স ৳${ctx.projectedMonthEndBalance.toLocaleString()} এ নেমে আসতে পারে।`
+        : `Your financial shortage risk is ${Math.round(ctx.shortageRisk * 100)}% (HIGH).
 The main contributing factors are:
 1. ${topAnomaly ? `${topAnomaly.category} spending increased by ${topAnomaly.pctChange}%.` : 'Recent spending acceleration.'}
 2. Cash-out withdrawals have been unusually frequent, rapidly depleting liquid reserves.
@@ -98,43 +153,55 @@ The main contributing factors are:
 4. Expected income arrives in ${ctx.daysUntilNextIncome} days, while current liquid balance is ৳${ctx.currentBalance.toLocaleString()}.
 5. Without spending adjustments, your projected month-end balance may drop to approximately ৳${ctx.projectedMonthEndBalance.toLocaleString()}.`;
     } else {
-      return `Your current financial shortage risk is ${Math.round(ctx.shortageRisk * 100)}% (${ctx.riskLevel}).
+      return lang === 'bn'
+        ? `আপনার বর্তমান আর্থিক তারল্য ঝুঁকি স্বাভাবিক (${Math.round(ctx.shortageRisk * 100)}%)। 
+বর্তমান ব্যালেন্স ৳${ctx.currentBalance.toLocaleString()} দিয়ে পরবর্তী বেতন আসার আগ পর্যন্ত দৈনিক গড় ৳${Math.round(ctx.monthlySpending / 30).toLocaleString()} ব্যয় অনায়াসে পরিচালনা করা সম্ভব।`
+        : `Your current financial shortage risk is ${Math.round(ctx.shortageRisk * 100)}% (${ctx.riskLevel}).
 Your current balance of ৳${ctx.currentBalance.toLocaleString()} comfortably covers your expected burn rate of ~৳${Math.round(ctx.monthlySpending / 30).toLocaleString()}/day across the remaining ${ctx.daysUntilNextIncome} days until payday.`;
     }
   }
 
-  if (q.includes('spending more') || q.includes('why am i spending') || q.includes('overspending') || q.includes('where am i spending')) {
+  if (q.includes('spending') || q.includes('খরচ') || q.includes('overspending') || q.includes('বেশি')) {
     const elevated = ctx.anomalies.filter((a) => a.pctChange > 10);
     if (elevated.length > 0) {
       const breakdown = elevated
-        .map((a) => `• ${a.category}: +${a.pctChange}% compared to your normal baseline`)
+        .map((a) => `• ${a.category}: স্বাভাবিকের চেয়ে +${a.pctChange}% বেশি`)
         .join('\n');
-      return `Based on your recent transactions, your expenses surged primarily in these areas:\n${breakdown}\n\n${elevated[0].category} is your highest variance category. Moderating optional deliveries or purchases in this category over the next ${ctx.daysUntilNextIncome} days will quickly stabilize your cash flow.`;
+      return lang === 'bn'
+        ? `আপনার সাম্প্রতিক লেনদেনে এই খাতগুলোতে অস্বাভাবিক খরচ বেড়েছে:\n${breakdown}\n\nবিশেষ করে ${elevated[0].category} খাতে অতিরিক্ত খরচ আগামী ${ctx.daysUntilNextIncome} দিন কিছুটা সংযত রাখলে আপনার ক্যাশ-ফ্লো দ্রুত স্থিতিশীল হবে।`
+        : `Based on your recent transactions, your expenses surged primarily in these areas:\n${breakdown}\n\n${elevated[0].category} is your highest variance category. Moderating optional deliveries or purchases in this category over the next ${ctx.daysUntilNextIncome} days will quickly stabilize your cash flow.`;
     }
-    return `Your top spending drivers this cycle are: ${ctx.topSpendingDrivers.join(', ')}. Overall spending is tracking at ৳${ctx.monthlySpending.toLocaleString()} per month.`;
+    return lang === 'bn'
+      ? `আপনার প্রধান খরচের খাতগুলো হলো: ${ctx.topSpendingDrivers.join(', ')}। মোট মাসিক গড় খরচ ৳${ctx.monthlySpending.toLocaleString()}।`
+      : `Your top spending drivers this cycle are: ${ctx.topSpendingDrivers.join(', ')}. Overall spending is tracking at ৳${ctx.monthlySpending.toLocaleString()} per month.`;
   }
 
-  if (q.includes('reduce') || q.includes('what happens if') || q.includes('15%') || q.includes('20%')) {
-    return `If you reduce discretionary spending by 15%–20% (approx ৳800 to ৳1,500 over the next two weeks), our simulation engine projects that:
+  if (q.includes('reduce') || q.includes('কমালে') || q.includes('১৫%') || q.includes('15%')) {
+    return lang === 'bn'
+      ? `খাবার বা রেস্তোরাঁ খরচে ১৫%–২০% সাশ্রয় করলে (আগামী দুই সপ্তাহে প্রায় ৳৮০০–৳১,৫০০):
+১. আপনার মাস শেষের প্রত্যাশিত ব্যালেন্স ৳${ctx.projectedMonthEndBalance.toLocaleString()} থেকে বৃদ্ধি পেয়ে আনুমানিক ৳${(ctx.projectedMonthEndBalance + 1250).toLocaleString()} হবে।
+২. ওয়ালেট ঘাটতির ঝুঁকি ৮২% থেকে নেমে ৪২% এর নিচে আসবে।
+৩. আগামী বিলগুলো পরিশোধের পর কোনো আর্থিক টানাপোড়েন হবে না।`
+      : `If you reduce discretionary spending by 15%–20% (approx ৳800 to ৳1,500 over the next two weeks), our simulation engine projects that:
 1. Your month-end balance will improve from ৳${ctx.projectedMonthEndBalance.toLocaleString()} to approximately ৳${(ctx.projectedMonthEndBalance + 1250).toLocaleString()}.
 2. Your shortage risk probability drops significantly from ${Math.round(ctx.shortageRisk * 100)}% to under 42%.
 3. You will preserve enough buffer to comfortably clear your upcoming bills without overdraft stress.`;
   }
 
-  if (q.includes('goal') || q.includes('savings') || q.includes('how much should i save')) {
-    const surplus = Math.max(0, ctx.monthlyIncome - ctx.monthlySpending);
-    return `Based on your monthly income of ৳${ctx.monthlyIncome.toLocaleString()} and typical monthly outflow of ৳${ctx.monthlySpending.toLocaleString()}, your current baseline surplus is approximately ৳${surplus.toLocaleString()}/month.
-To meet your savings goals consistently without triggering cash shortages:
-• Allocate a realistic target of ৳${Math.round(Math.max(1500, surplus * 0.7)).toLocaleString()} per month.
-• We recommend automating this transfer immediately upon salary receipt so you are not tempted to spend it during late-month cycles.`;
-  }
+  // General helpful response
+  return lang === 'bn'
+    ? `আপনার বর্তমান ওয়ালেটের চিত্র:
+• বর্তমান ব্যালেন্স: ৳${ctx.currentBalance.toLocaleString()}
+• পরবর্তী বেতনের বাকি: ${ctx.daysUntilNextIncome} দিন
+• তারল্য ঝুঁকি: ${Math.round(ctx.shortageRisk * 100)}% (${ctx.riskLevel === 'HIGH' ? 'উচ্চ' : 'স্বাভাবিক'})
+• মাস শেষের প্রক্ষেপণ: ৳${ctx.projectedMonthEndBalance.toLocaleString()}
 
-  if (q.includes('running out') || q.includes('balance decrease') || q.includes('why did my projected balance')) {
-    return `Your spending pattern shows that expenses tend to accelerate during the second half of the month. ${ctx.topSpendingDrivers[0] || 'Food'} and cash-out transactions are your largest drains. With ${ctx.daysUntilNextIncome} days remaining until your next income deposit, your projected balance is expected to hit ৳${ctx.projectedMonthEndBalance.toLocaleString()} unless discretionary outflow is capped.`;
-  }
-
-  // General helpful response grounded in facts
-  return `Here is your current financial posture snapshot:
+আমাকে নির্দিষ্ট বিষয়ে জিজ্ঞাসা করতে পারেন, যেমন:
+- "আমার ঝুঁকি কেন এত বেশি?"
+- "কোথায় অতিরিক্ত খরচ হচ্ছে?"
+- "খাবারে ১৫% খরচ কমালে কী হবে?"
+- "মাস শেষে কত টাকা বাঁচানো সম্ভব?"`
+    : `Here is your current financial posture snapshot:
 • Current Balance: ৳${ctx.currentBalance.toLocaleString()}
 • Days to Next Income: ${ctx.daysUntilNextIncome} days
 • Shortage Risk: ${Math.round(ctx.shortageRisk * 100)}% (${ctx.riskLevel})

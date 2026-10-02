@@ -13,11 +13,11 @@ interface Message {
   role: 'user' | 'assistant';
   text: string;
   timestamp: string;
-  source?: 'gemini-3.8-flash' | 'rule-engine-fallback';
+  source?: 'gemini-3.8-flash' | 'gemini-3.1-flash-lite' | 'rule-engine-fallback' | string;
 }
 
 export const AICoach: React.FC = () => {
-  const { customer, profile, risk, forecast, anomalies, formatMoney } = useFinancial();
+  const { customer, profile, risk, forecast, anomalies, lang, formatMoney } = useFinancial();
 
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,9 +79,11 @@ export const AICoach: React.FC = () => {
         anomalies
       );
 
-      const promptQuery = `[Respond in Bengali / বাংলায় সহজ ভাষায় উত্তর দিন]: ${query}`;
+      const promptQuery = lang === 'bn'
+        ? `[Respond in Bengali / বাংলায় সহজ ভাষায় উত্তর দিন]: ${query}`
+        : `[Respond in English with practical financial advice]: ${query}`;
       const history = messages.map((m) => ({ role: m.role, text: m.text }));
-      const response = await askAICoach(promptQuery, coachContext, history);
+      const response = await askAICoach(promptQuery, coachContext, history, lang);
 
       const assistantMsg: Message = {
         id: `a_${Date.now()}`,
@@ -217,8 +219,12 @@ export const AICoach: React.FC = () => {
                   >
                     <span>{msg.timestamp}</span>
                     {msg.source && (
-                      <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-white border border-[var(--line)] text-[var(--muted)] font-bold">
-                        {msg.source === 'gemini-3.8-flash' ? '✨ Gemini 3.8 Flash' : '⚡ Rule Engine'}
+                      <span className={`font-mono text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                        msg.source.includes('gemini')
+                          ? 'bg-indigo-50 border border-indigo-200 text-indigo-700'
+                          : 'bg-white border border-[var(--line)] text-[var(--muted)]'
+                      }`}>
+                        {msg.source.includes('gemini') ? `✨ Google ${msg.source}` : '⚡ Deterministic Fallback'}
                       </span>
                     )}
                   </div>
