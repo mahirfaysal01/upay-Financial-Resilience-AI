@@ -18,6 +18,7 @@ import {
   Target,
   Clock,
   ArrowUpRight,
+  Download,
 } from 'lucide-react';
 import {
   LineChart,
@@ -34,15 +35,61 @@ import { useFinancial } from '../context/FinancialContext';
 import { useNotification } from '../context/NotificationContext';
 import { askAICoach, buildCoachContext } from '../services/aiCoachEngine';
 import { toBengaliNumber } from '../utils/translations';
+import { exportMonthlyFinancialDataCSV } from '../utils/exportFinancialData';
 
 export const Dashboard: React.FC = () => {
-  const { customer, profile, forecast, risk, anomalies, recommendations, goals, lang, t, formatMoney } = useFinancial();
+  const { customer, profile, transactions, forecast, risk, anomalies, recommendations, goals, lang, t, formatMoney } = useFinancial();
   const { notifyFinancial } = useNotification();
 
   // AI Advice Chat state in dashboard
   const [adviceInput, setAdviceInput] = useState('');
   const [adviceMessages, setAdviceMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([]);
   const [isAskingAI, setIsAskingAI] = useState(false);
+
+  // CSV Data Export state
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
+
+  const handleExportCSV = () => {
+    try {
+      setIsExporting(true);
+      const result = exportMonthlyFinancialDataCSV({
+        customer,
+        profile,
+        transactions,
+        anomalies,
+        risk,
+        forecast,
+        lang,
+      });
+
+      if (result.success) {
+        setExportSuccess(true);
+        notifyFinancial(
+          lang === 'bn' ? 'সিএসভি ডাউনলোড সফল' : 'CSV Export Complete',
+          lang === 'bn'
+            ? `${customer.name}-এর মাসিক আর্থিক বিবরণী (${result.filename}) ডাউনলোড হয়েছে।`
+            : `Monthly financial statement (${result.filename}) downloaded successfully.`,
+          {
+            financialDetails: {
+              amount: profile.monthlyIncome,
+              category: lang === 'bn' ? 'মাসিক রিপোর্ট' : 'Monthly Statement',
+              trend: 'up',
+            },
+            duration: 5000,
+          }
+        );
+
+        setTimeout(() => {
+          setExportSuccess(false);
+          setIsExporting(false);
+        }, 2500);
+      }
+    } catch (err) {
+      console.error('Failed to export CSV:', err);
+      setIsExporting(false);
+    }
+  };
 
   // Synchronize greeting message and critical financial alerts on customer or language change
   useEffect(() => {
@@ -237,11 +284,61 @@ export const Dashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* 3) SUMMARY STATS ROW (5 Cards) */}
-      <section
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
-        aria-label={lang === 'bn' ? 'আর্থিক সারসংক্ষেপ মেট্রিক্স' : 'Financial Summary Metrics'}
-      >
+      {/* 3) FINANCIAL SUMMARIES SECTION & DATA EXPORT (5 Cards) */}
+      <section className="space-y-3.5" aria-label={lang === 'bn' ? 'আর্থিক সারসংক্ষেপ ও ডেটা এক্সপোর্ট' : 'Financial Summaries & Data Export'}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="font-heading font-extrabold text-[18px] sm:text-[20px] text-[var(--navy)] leading-tight">
+                {lang === 'bn' ? 'আর্থিক সারসংক্ষেপ' : 'Financial Summaries'}
+              </h2>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] font-bold border border-[var(--yellow)]/30 tracking-tight">
+                {lang === 'bn' ? 'অক্টোবর ২০২৬' : 'October 2026'}
+              </span>
+            </div>
+            <p className="text-caption text-[var(--muted)] mt-0.5">
+              {lang === 'bn'
+                ? 'আপনার চলতি মাসের আয়, ব্যয়, ওয়ালেট ব্যালেন্স এবং লিকুইডিটি ঝুঁকির সার্বিক চিত্র'
+                : 'Key monthly indicators of cash inflows, expenditures, liquid balance, and shortage risks'}
+            </p>
+          </div>
+
+          {/* Data Export Button */}
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <button
+              onClick={handleExportCSV}
+              disabled={isExporting}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-[14px] text-[13px] font-bold border shadow-2xs transition-all cursor-pointer ${
+                exportSuccess
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                  : 'bg-white hover:bg-[var(--bg)] border-[var(--line)] hover:border-[var(--navy)] text-[var(--navy)]'
+              }`}
+              title={lang === 'bn' ? 'মাসিক আর্থিক ডেটা সিএসভি (CSV) ফাইল হিসেবে ডাউনলোড করুন' : 'Download monthly financial data as CSV'}
+            >
+              {exportSuccess ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 animate-in zoom-in" />
+                  <span>{lang === 'bn' ? 'সিএসভি ডাউনলোড সম্পন্ন' : 'CSV Downloaded!'}</span>
+                </>
+              ) : isExporting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-[var(--navy)] border-t-transparent rounded-full animate-spin" />
+                  <span>{lang === 'bn' ? 'এক্সপোর্ট হচ্ছে...' : 'Exporting...'}</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 text-[var(--navy)]" />
+                  <span>{lang === 'bn' ? 'সিএসভি ডাউনলোড' : 'Export CSV'}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
+          aria-label={lang === 'bn' ? 'আর্থিক সারসংক্ষেপ মেট্রিক্স' : 'Financial Summary Metrics'}
+        >
         {/* Card 1: মোট আয় */}
         <div className="upay-card p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between">
@@ -349,6 +446,7 @@ export const Dashboard: React.FC = () => {
           <p className="text-caption text-[var(--danger)] font-medium">
             {lang === 'bn' ? '৳১,০০০ এর নিচে নামবে ৯ দিনে' : 'Sub-৳1,000 threshold in 9 days'}
           </p>
+        </div>
         </div>
       </section>
 

@@ -77,15 +77,13 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-18 gap-3">
           {/* Left: upay official logo */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <NavLink to="/" className="flex items-center gap-2 group transition-transform hover:opacity-95">
-              {/* Full Logo on tablet & desktop */}
-              <div className="hidden sm:block">
-                <UpayLogo height={44} variant="full" />
-              </div>
-              {/* Compact Logo on mobile */}
-              <div className="block sm:hidden">
-                <UpayLogo height={38} variant="compact" />
-              </div>
+            <NavLink to="/" className="flex items-center gap-2 group transition-transform hover:opacity-95" title="upay Financial Resilience AI">
+              <img
+                src="/upaymain.png"
+                alt="upay Financial Resilience AI"
+                className="h-10 sm:h-12 w-auto max-w-[210px] sm:max-w-[260px] object-contain"
+                loading="eager"
+              />
             </NavLink>
           </div>
 

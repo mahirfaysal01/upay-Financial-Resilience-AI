@@ -5,11 +5,42 @@ import {
   Briefcase,
   Activity,
   FileSpreadsheet,
+  Download,
+  CheckCircle2,
 } from 'lucide-react';
 import { useFinancial } from '../context/FinancialContext';
+import { exportMonthlyFinancialDataCSV } from '../utils/exportFinancialData';
 
 export const ProfileOverview: React.FC = () => {
-  const { customer, profile, transactions, formatMoney } = useFinancial();
+  const { customer, profile, transactions, anomalies, risk, forecast, lang, formatMoney } = useFinancial();
+  const [isExporting, setIsExporting] = React.useState(false);
+  const [exportSuccess, setExportSuccess] = React.useState(false);
+
+  const handleExportCSV = () => {
+    try {
+      setIsExporting(true);
+      const result = exportMonthlyFinancialDataCSV({
+        customer,
+        profile,
+        transactions,
+        anomalies,
+        risk,
+        forecast,
+        lang,
+      });
+
+      if (result.success) {
+        setExportSuccess(true);
+        setTimeout(() => {
+          setExportSuccess(false);
+          setIsExporting(false);
+        }, 2500);
+      }
+    } catch (err) {
+      console.error('Failed to export CSV in ProfileOverview:', err);
+      setIsExporting(false);
+    }
+  };
 
   const customerNamesBn: Record<string, { name: string; profile: string; occupation: string; location: string }> = {
     C001: { name: 'রহিম হাসান', profile: 'মাস-শেষের অতিরিক্ত খরচকারী', occupation: 'জুনিয়র এক্সিকিউটিভ / শিক্ষার্থী', location: 'ঢাকা, বাংলাদেশ' },
@@ -74,14 +105,39 @@ export const ProfileOverview: React.FC = () => {
 
       {/* Complete Financial Profile Metrics Grid */}
       <div className="upay-card p-6 space-y-4">
-        <div>
-          <h3 className="text-[#0B1F4B] flex items-center gap-2">
-            <Activity className="w-4 h-4 text-[var(--yellow)]" />
-            <span>গ্রাহক আর্থিক প্রোফাইল অবজেক্ট মেট্রিক্স</span>
-          </h3>
-          <p className="text-caption text-[var(--muted)]">
-            ফাইন্যান্সিয়াল প্রোফাইল ইঞ্জিন দ্বারা গণনাকৃত বৈশিষ্ঠ্যসমূহ
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[var(--line)]">
+          <div>
+            <h3 className="text-[#0B1F4B] flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[var(--yellow)]" />
+              <span>{lang === 'bn' ? 'গ্রাহক আর্থিক প্রোফাইল অবজেক্ট মেট্রিক্স' : 'Customer Financial Profile Metrics'}</span>
+            </h3>
+            <p className="text-caption text-[var(--muted)]">
+              {lang === 'bn' ? 'ফাইন্যান্সিয়াল প্রোফাইল ইঞ্জিন দ্বারা গণনাকৃত বৈশিষ্ঠ্যসমূহ' : 'Computed by Deterministic Financial Profile Engine'}
+            </p>
+          </div>
+
+          <button
+            onClick={handleExportCSV}
+            disabled={isExporting}
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[12px] text-[12.5px] font-bold border shadow-2xs transition-all cursor-pointer ${
+              exportSuccess
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                : 'bg-white hover:bg-[var(--bg)] border-[var(--line)] hover:border-[var(--navy)] text-[var(--navy)]'
+            }`}
+            title={lang === 'bn' ? 'মাসিক আর্থিক বিবরণী সিএসভি হিসেবে ডাউনলোড করুন' : 'Export monthly financial statement as CSV'}
+          >
+            {exportSuccess ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 animate-in zoom-in" />
+                <span>{lang === 'bn' ? 'সিএসভি ডাউনলোড সম্পন্ন' : 'CSV Downloaded'}</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-3.5 h-3.5 text-[var(--navy)]" />
+                <span>{lang === 'bn' ? 'সিএসভি ডাউনলোড' : 'Export CSV'}</span>
+              </>
+            )}
+          </button>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
