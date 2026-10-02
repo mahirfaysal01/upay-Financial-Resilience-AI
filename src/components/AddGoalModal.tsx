@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { X, Target, CheckCircle2 } from 'lucide-react';
 import { useFinancial } from '../context/FinancialContext';
+import { useNotification } from '../context/NotificationContext';
 
 export const AddGoalModal: React.FC = () => {
-  const { isAddGoalModalOpen, setIsAddGoalModalOpen, addGoal } = useFinancial();
+  const { isAddGoalModalOpen, setIsAddGoalModalOpen, addGoal, lang } = useFinancial();
+  const { notifySuccess, notifyError } = useNotification();
 
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('45000');
@@ -16,19 +18,47 @@ export const AddGoalModal: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      notifyError(
+        lang === 'bn' ? 'লক্ষ্যের নাম প্রয়োজন' : 'Goal Name Required',
+        lang === 'bn' ? 'অনুগ্রহ করে সঞ্চয় লক্ষ্যের একটি শিরোনাম লিখুন।' : 'Please enter a title for your savings goal.'
+      );
+      return;
+    }
+
+    const targetVal = parseFloat(targetAmount);
+    if (isNaN(targetVal) || targetVal <= 0) {
+      notifyError(
+        lang === 'bn' ? 'সঠিক পরিমাণ দিন' : 'Invalid Target Amount',
+        lang === 'bn' ? 'লক্ষ্যের টাকার পরিমাণ শূন্যের বেশি হতে হবে।' : 'Target amount must be greater than zero.'
+      );
+      return;
+    }
 
     const targetDate = new Date('2026-10-01');
     targetDate.setMonth(targetDate.getMonth() + parseInt(deadlineMonths || '6'));
 
     addGoal({
       goal_name: name,
-      target_amount: parseFloat(targetAmount) || 20000,
+      target_amount: targetVal,
       current_amount: parseFloat(currentAmount) || 0,
       deadline: targetDate.toISOString().split('T')[0],
       priority,
       category,
     });
+
+    notifySuccess(
+      lang === 'bn' ? 'সঞ্চয় লক্ষ্য যুক্ত হয়েছে' : 'Savings Goal Created',
+      lang === 'bn'
+        ? `"${name}" সফলভাবে যুক্ত হয়েছে এবং ক্লাউডে সংরক্ষিত হয়েছে।`
+        : `"${name}" has been created and synced with the cloud.`,
+      {
+        financialDetails: {
+          amount: targetVal,
+          category,
+        },
+      }
+    );
 
     setIsAddGoalModalOpen(false);
     setName('');

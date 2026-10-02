@@ -15,6 +15,9 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useFinancial } from '../context/FinancialContext';
+import { useNotification } from '../context/NotificationContext';
+import { NotificationCenterModal } from './NotificationCenterModal';
+import { UpayLogo } from './UpayLogo';
 
 export const Navbar: React.FC = () => {
   const {
@@ -32,7 +35,9 @@ export const Navbar: React.FC = () => {
     firebaseProjectId,
   } = useFinancial();
 
+  const { unreadCount } = useNotification();
   const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const location = useLocation();
 
   const navLinks = [
@@ -70,30 +75,17 @@ export const Navbar: React.FC = () => {
       {/* Upper Navigation Row */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18 gap-3">
-          {/* Left: upay official logo + yellow-soft pill */}
+          {/* Left: upay official logo */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <NavLink to="/" className="flex items-center gap-2 sm:gap-2.5 group">
-              <div className="h-10 flex items-center">
-                <img
-                  src="https://www.upaybd.com/images/upay-logo-2024.png"
-                  alt="upay | উপায়"
-                  className="h-8 sm:h-9 object-contain"
-                  onError={(e) => {
-                    // Fallback to stylized SVG brandmark if image fails
-                    e.currentTarget.style.display = 'none';
-                    const parent = e.currentTarget.parentElement;
-                    if (parent && !parent.querySelector('.upay-logo-fallback')) {
-                      const div = document.createElement('div');
-                      div.className = 'upay-logo-fallback flex items-center gap-1 font-black text-2xl text-[var(--navy)]';
-                      div.innerHTML = `<span style="background:var(--navy);color:var(--yellow);padding:2px 8px;border-radius:10px;font-size:20px;font-weight:900;">u</span><span style="font-weight:900;color:var(--navy);letter-spacing:-0.5px;">pay</span>`;
-                      parent.appendChild(div);
-                    }
-                  }}
-                />
+            <NavLink to="/" className="flex items-center gap-2 group transition-transform hover:opacity-95">
+              {/* Full Logo on tablet & desktop */}
+              <div className="hidden sm:block">
+                <UpayLogo height={44} variant="full" />
               </div>
-              <span className="hidden xs:inline-flex items-center px-2.5 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] font-bold text-[12px] border border-[var(--yellow)]/30 tracking-tight">
-                {lang === 'bn' ? 'রেজিলিয়েন্স এআই' : 'Resilience AI'}
-              </span>
+              {/* Compact Logo on mobile */}
+              <div className="block sm:hidden">
+                <UpayLogo height={38} variant="compact" />
+              </div>
             </NavLink>
           </div>
 
@@ -203,15 +195,21 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
 
-            {/* Notification Bell with red dot */}
+            {/* Notification Bell with dynamic badge */}
             <button
               className="relative p-2 rounded-[14px] text-[var(--muted)] hover:text-[var(--navy)] hover:bg-[var(--bg)] transition-colors cursor-pointer"
-              aria-label={lang === 'bn' ? 'বিজ্ঞপ্তি' : 'Notifications'}
-              onClick={() => setIsHowItWorksOpen(true)}
-              title={lang === 'bn' ? 'সতর্কবার্তা ও মডেলের স্বচ্ছতা' : 'Alerts & Model Transparency'}
+              aria-label={lang === 'bn' ? 'আর্থিক বিজ্ঞপ্তি কেন্দ্র' : 'Financial Notification Center'}
+              onClick={() => setIsNotificationModalOpen(true)}
+              title={lang === 'bn' ? 'আর্থিক বিজ্ঞপ্তি ও সতর্কতা' : 'Financial Notifications & Alerts'}
             >
               <Bell className="w-4 h-4 text-[var(--navy)]" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[var(--danger)] ring-2 ring-white"></span>
+              {unreadCount > 0 ? (
+                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--danger)] text-white text-[9.5px] font-bold flex items-center justify-center ring-2 ring-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              ) : (
+                <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+              )}
             </button>
           </div>
         </div>
@@ -252,6 +250,12 @@ export const Navbar: React.FC = () => {
           </nav>
         </div>
       </div>
+
+      {/* Financial Notification Center Modal */}
+      <NotificationCenterModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+      />
     </header>
   );
 };

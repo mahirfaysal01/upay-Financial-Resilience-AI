@@ -31,25 +31,48 @@ import {
   Cell,
 } from 'recharts';
 import { useFinancial } from '../context/FinancialContext';
+import { useNotification } from '../context/NotificationContext';
 import { askAICoach, buildCoachContext } from '../services/aiCoachEngine';
 import { toBengaliNumber } from '../utils/translations';
 
 export const Dashboard: React.FC = () => {
   const { customer, profile, forecast, risk, anomalies, recommendations, goals, lang, t, formatMoney } = useFinancial();
+  const { notifyFinancial } = useNotification();
 
   // AI Advice Chat state in dashboard
   const [adviceInput, setAdviceInput] = useState('');
   const [adviceMessages, setAdviceMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([]);
   const [isAskingAI, setIsAskingAI] = useState(false);
 
-  // Synchronize greeting message on customer or language change
+  // Synchronize greeting message and critical financial alerts on customer or language change
   useEffect(() => {
     const greeting = lang === 'bn'
       ? `আসসালামু আলাইকুম ${customer.name === 'Rahim Hasan' ? 'রহিম' : customer.name}! আপনার বর্তমান খরচের গতিপথ অনুযায়ী আগামী ${toBengaliNumber(profile.daysUntilNextIncome)} দিনের মধ্যে ওয়ালেট ঘাটতির ঝুঁকি রয়েছে। খাবার ও ক্যাশ-আউট খরচ কিছুটা কমিয়ে কীভাবে মাস শেষ সুরক্ষিত করবেন তা জানতে আমাকে প্রশ্ন করতে পারেন।`
       : `Hello ${customer.name}! Based on your current spending trajectory, you face a liquidity risk in the next ${profile.daysUntilNextIncome} days before your next deposit. Ask me how trimming dining or cash-out fees can help protect your month-end.`;
 
     setAdviceMessages([{ role: 'assistant', text: greeting }]);
-  }, [customer.customer_id, lang, profile.daysUntilNextIncome]);
+
+    // If customer has a high shortage risk, trigger a contextual financial toast
+    if (risk.riskLevel === 'HIGH' || risk.probability >= 0.7) {
+      const timer = setTimeout(() => {
+        notifyFinancial(
+          lang === 'bn' ? 'জরুরি তারল্য ঝুঁকি সতর্কতা' : 'Critical Cashflow Risk Alert',
+          lang === 'bn'
+            ? `${customer.name}-এর ওয়ালেটে আগামী ${profile.daysUntilNextIncome} দিনের মধ্যে ৳১,০০০ এর নিচে নামার উচ্চ ঝুঁকি রয়েছে।`
+            : `${customer.name} has a high risk of dropping below ৳1,000 threshold within ${profile.daysUntilNextIncome} days.`,
+          {
+            financialDetails: {
+              amount: profile.currentBalance,
+              category: `ঝুঁকির মাত্রা: ${Math.round(risk.probability * 100)}%`,
+              trend: 'down',
+            },
+            duration: 6000,
+          }
+        );
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [customer.customer_id, lang, profile.daysUntilNextIncome, risk.riskLevel, risk.probability]);
 
   const handleAskAI = async (queryText?: string) => {
     const q = (queryText || adviceInput).trim();

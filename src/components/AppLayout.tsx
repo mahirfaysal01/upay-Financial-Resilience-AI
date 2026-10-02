@@ -5,6 +5,7 @@ import { Navbar } from './Navbar';
 import { ResponsibleAIModal } from './ResponsibleAIModal';
 import { HowItWorksModal } from './HowItWorksModal';
 import { AddGoalModal } from './AddGoalModal';
+import { UpayLogo } from './UpayLogo';
 
 import { Dashboard } from '../pages/Dashboard';
 import { SpendingIntelligence } from '../pages/SpendingIntelligence';
@@ -41,17 +42,7 @@ export const AppLayout: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Left: upay logo + name */}
           <div className="flex items-center gap-3">
-            <img
-              src="https://www.upaybd.com/images/upay-logo-2024.png"
-              alt="upay"
-              className="h-6 object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-            <span className="font-heading font-extrabold text-[14.5px] text-[var(--navy)]">
-              upay Financial Resilience AI
-            </span>
+            <UpayLogo height={32} variant="compact" />
           </div>
 
           {/* Right: Small Muted Links */}

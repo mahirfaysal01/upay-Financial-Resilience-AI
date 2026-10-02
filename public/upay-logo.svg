@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 200" fill="none" width="100%" height="100%">
+  <!-- Definitions for Gradients / Clip paths -->
+  <defs>
+    <!-- Left to Right clip for two-tone U in Upay -->
+    <clipPath id="u-left-clip">
+      <rect x="250" y="30" width="37" height="100" />
+    </clipPath>
+    <clipPath id="u-right-clip">
+      <rect x="287" y="30" width="45" height="100" />
+    </clipPath>
+  </defs>
+
+  <!-- ==================== LEFT EMBLEM ==================== -->
+  <g id="emblem" transform="translate(10, 0)">
+    <!-- Yellow Figure (Left) -->
+    <!-- Head -->
+    <circle cx="82" cy="54" r="21" fill="#FFB800" />
+    <!-- Yellow Body Swoop -->
+    <path
+      d="M 82,86 C 65,86 48,98 44,116 C 39,138 48,162 72,174 C 95,185 125,182 144,166 C 146,164 145,160 141,157 C 130,150 115,152 100,150 C 80,147 67,136 67,122 C 67,108 76,98 88,96 C 92,95 94,86 82,86 Z"
+      fill="#FFB800"
+    />
+
+    <!-- Blue Figure (Right) -->
+    <!-- Head -->
+    <circle cx="182" cy="54" r="21" fill="#0055D4" />
+    <!-- Blue Body Swoop -->
+    <path
+      d="M 182,86 C 199,86 216,98 220,116 C 225,138 216,162 192,174 C 169,185 139,182 120,166 C 118,164 119,160 123,157 C 134,150 149,152 164,150 C 184,147 197,136 197,122 C 197,108 188,98 176,96 C 172,95 170,86 182,86 Z"
+      fill="#0055D4"
+    />
+
+    <!-- Shield in Center -->
+    <g id="shield">
+      <!-- Green Shield Body -->
+      <path
+        d="M 107,82 L 157,82 C 157,82 160,115 132,139 C 104,115 107,82 107,82 Z"
+        fill="#00875A"
+      />
+
+      <!-- Shield Highlight Curve -->
+      <path
+        d="M 110,85 L 132,85 L 132,135 C 112,116 110,92 110,85 Z"
+        fill="#00A86B"
+        opacity="0.25"
+      />
+
+      <!-- 3 White Bar Chart Bars -->
+      <!-- Bar 1 (Short) -->
+      <rect x="117" y="117" width="5" height="11" rx="1.5" fill="#FFFFFF" />
+      <!-- Bar 2 (Medium) -->
+      <rect x="126" y="110" width="5" height="18" rx="1.5" fill="#FFFFFF" />
+      <!-- Bar 3 (Tall) -->
+      <rect x="135" y="103" width="5" height="25" rx="1.5" fill="#FFFFFF" />
+
+      <!-- White Rising Trend Arrow -->
+      <path
+        d="M 116,115 Q 128,106 142,95"
+        stroke="#FFFFFF"
+        stroke-width="3"
+        stroke-linecap="round"
+        fill="none"
+      />
+      <!-- Arrow Tip -->
+      <path
+        d="M 134,94 L 143,94 L 143,103"
+        stroke="#FFFFFF"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"
+      />
+    </g>
+  </g>
+
+  <!-- ==================== VERTICAL DIVIDER ==================== -->
+  <line x1="248" y1="52" x2="248" y2="152" stroke="#94A3B8" stroke-width="3.5" stroke-linecap="round" opacity="0.75" />
+
+  <!-- ==================== WORDMARK "Upay" ==================== -->
+  <g id="wordmark">
+    <!-- Two-tone U: Left half #FFB800, Right half #0055D4 -->
+    <!-- Base U path -->
+    <!-- Yellow Left Half of U -->
+    <path
+      d="M 271,50 L 291,50 L 291,95 C 291,105 296,111 306,111 C 316,111 321,105 321,95 L 321,50 L 341,50 L 341,95 C 341,118 327,129 306,129 C 285,129 271,118 271,95 Z"
+      fill="#FFB800"
+      clip-path="url(#u-left-clip)"
+    />
+    <!-- Blue Right Half of U -->
+    <path
+      d="M 271,50 L 291,50 L 291,95 C 291,105 296,111 306,111 C 316,111 321,105 321,95 L 321,50 L 341,50 L 341,95 C 341,118 327,129 306,129 C 285,129 271,118 271,95 Z"
+      fill="#0055D4"
+      clip-path="url(#u-right-clip)"
+    />
+
+    <!-- pay in deep navy (#0B1F4B) -->
+    <!-- Letter 'p' -->
+    <path
+      d="M 348,63 L 366,63 L 366,72 C 372,64 382,61 393,61 C 411,61 424,75 424,96 C 424,117 411,131 393,131 C 382,131 372,127 366,120 L 366,152 L 348,152 Z M 366,96 C 366,108 374,115 385,115 C 396,115 404,108 404,96 C 404,84 396,77 385,77 C 374,77 366,84 366,96 Z"
+      fill="#0B1F4B"
+    />
+
+    <!-- Letter 'a' -->
+    <path
+      d="M 467,63 L 485,63 L 485,129 L 468,129 L 468,120 C 462,127 453,131 442,131 C 427,131 416,121 416,106 C 416,89 430,81 454,80 L 467,79 L 467,76 C 467,70 461,66 452,66 C 444,66 437,69 433,74 L 423,63 C 431,54 443,51 458,51 C 464,51 467,52 467,63 Z M 467,93 L 456,94 C 443,95 435,99 435,106 C 435,113 442,117 451,117 C 461,117 467,110 467,101 Z"
+      fill="#0B1F4B"
+    />
+
+    <!-- Letter 'y' -->
+    <path
+      d="M 490,63 L 510,63 L 526,110 L 542,63 L 562,63 L 536,132 C 527,154 515,162 497,162 C 490,162 483,160 478,157 L 485,142 C 488,144 492,145 496,145 C 505,145 512,140 516,128 Z"
+      fill="#0B1F4B"
+    />
+  </g>
+
+  <!-- ==================== SUBTITLE "Financial Resilience AI" ==================== -->
+  <text
+    x="272"
+    y="160"
+    fill="#0B1F4B"
+    font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    font-size="22"
+    font-weight="600"
+    letter-spacing="0.3"
+  >Financial Resilience AI</text>
+</svg>

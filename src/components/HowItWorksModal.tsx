@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Database, UserCheck, LineChart, AlertTriangle, Lightbulb, Sliders } from 'lucide-react';
 import { useFinancial } from '../context/FinancialContext';
+import { UpayLogo } from './UpayLogo';
 
 export const HowItWorksModal: React.FC = () => {
   const { isHowItWorksOpen, setIsHowItWorksOpen } = useFinancial();
@@ -50,13 +51,17 @@ export const HowItWorksModal: React.FC = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
       <div className="relative w-full max-w-3xl bg-[var(--card)] border border-[var(--line)] rounded-[28px] shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between pb-4 border-b border-[var(--line)]">
-          <div>
-            <h2 className="text-[20px] font-bold text-[var(--navy)]">
-              ইন্টেলিজেন্স আর্কিটেকচার ও ডেটা পাইপলাইন
-            </h2>
-            <p className="text-caption text-[var(--muted)]">
-              ডিটারমিনিস্টিক মেশিন লার্নিং কোর এবং জেনারেটিভ এআই জেমিনাই অনুবাদক
-            </p>
+          <div className="flex items-center gap-3">
+            <UpayLogo height={34} variant="compact" />
+            <div className="h-8 w-px bg-[var(--line)] hidden sm:block"></div>
+            <div>
+              <h2 className="text-[19px] font-bold text-[var(--navy)]">
+                ইন্টেলিজেন্স আর্কিটেকচার ও ডেটা পাইপলাইন
+              </h2>
+              <p className="text-caption text-[var(--muted)]">
+                ডিটারমিনিস্টিক মেশিন লার্নিং কোর এবং জেনারেটিভ এআই জেমিনাই অনুবাদক
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setIsHowItWorksOpen(false)}

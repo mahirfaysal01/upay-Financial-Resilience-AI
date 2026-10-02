@@ -18,11 +18,15 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useFinancial } from '../context/FinancialContext';
+import { useNotification } from '../context/NotificationContext';
+import { saveSimulationToFirebase } from '../services/firebaseSync';
 import { runWhatIfSimulation } from '../services/simulationEngine';
 import { SimulationParams } from '../types/financial';
 
 export const WhatIfSimulator: React.FC = () => {
-  const { customer, profile, formatMoney } = useFinancial();
+  const { customer, profile, formatMoney, lang } = useFinancial();
+  const { notifyFinancial, notifySuccess, notifyInfo } = useNotification();
+  const [isSaving, setIsSaving] = useState(false);
 
   const [params, setParams] = useState<SimulationParams>({
     foodReductionPct: 15,
@@ -54,6 +58,42 @@ export const WhatIfSimulator: React.FC = () => {
       unexpectedExpense: 0,
       cashOutReductionPct: 0,
     });
+    notifyInfo(
+      lang === 'bn' ? 'সিমুলেশন রিসেট হয়েছে' : 'Simulation Reset',
+      lang === 'bn' ? 'সকল প্যারামিটার প্রারম্ভিক অবস্থায় ফিরিয়ে নেওয়া হয়েছে।' : 'All parameters reset to baseline.'
+    );
+  };
+
+  const handleSaveSimulation = async () => {
+    setIsSaving(true);
+    try {
+      await saveSimulationToFirebase({
+        customerId: customer.customer_id,
+        customerName: customer.name,
+        params,
+        projectedBalance: after.projectedMonthEndBalance,
+        deltaBalance,
+        deltaRiskPercentagePoints,
+        savedAt: new Date().toISOString(),
+      });
+      notifySuccess(
+        lang === 'bn' ? 'সিমুলেশন সংরক্ষিত' : 'Simulation Saved',
+        lang === 'bn'
+          ? `মাস শেষের উদ্বৃত্ত ${formatMoney(after.projectedMonthEndBalance)} ক্লাউডে সংরক্ষিত হয়েছে।`
+          : `Projected month-end balance ${formatMoney(after.projectedMonthEndBalance)} logged to cloud.`,
+        {
+          financialDetails: {
+            amount: deltaBalance,
+            category: 'সিমুলেটেড উদ্বৃত্ত',
+            trend: deltaBalance >= 0 ? 'up' : 'down',
+          },
+        }
+      );
+    } catch {
+      // fallback
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const applyPreset = (presetName: string) => {
@@ -94,6 +134,16 @@ export const WhatIfSimulator: React.FC = () => {
         cashOutReductionPct: 0,
       });
     }
+
+    notifyFinancial(
+      lang === 'bn' ? 'হোয়াট-ইফ সিনারিও প্রয়োগ করা হয়েছে' : 'Scenario Applied',
+      lang === 'bn'
+        ? `ক্যাশ-ফ্লো পূর্বাভাস পুনরায় গণনা করা হয়েছে।`
+        : `Cash flow forecast recalculated.`,
+      {
+        duration: 4000,
+      }
+    );
   };
 
   return (
@@ -110,13 +160,24 @@ export const WhatIfSimulator: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleReset}
-          className="px-4 py-2 rounded-[14px] bg-[var(--bg)] hover:bg-slate-200/60 border border-[var(--line)] text-[var(--navy)] text-[13px] font-bold flex items-center gap-1.5 transition-colors self-start sm:self-auto cursor-pointer"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span>আগের অবস্থায় ফিরুন</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={handleSaveSimulation}
+            disabled={isSaving}
+            className="px-4 py-2 rounded-[14px] bg-[var(--navy)] hover:bg-[var(--navy-2)] text-[var(--yellow)] text-[13px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+            title={lang === 'bn' ? 'সিমুলেশন রেকর্ড ক্লাউডে সংরক্ষণ করুন' : 'Save simulation scenario to cloud'}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[var(--yellow)]" />
+            <span>{isSaving ? (lang === 'bn' ? 'সংরক্ষণ হচ্ছে...' : 'Saving...') : (lang === 'bn' ? 'পরিকল্পনা সেভ করুন' : 'Save Plan')}</span>
+          </button>
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 rounded-[14px] bg-[var(--bg)] hover:bg-slate-200/60 border border-[var(--line)] text-[var(--navy)] text-[13px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>{lang === 'bn' ? 'রিসেট' : 'Reset'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Quick Presets Bar */}

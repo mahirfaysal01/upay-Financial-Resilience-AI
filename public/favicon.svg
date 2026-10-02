@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <!-- Yellow Figure (Left) -->
+  <circle cx="70" cy="62" r="26" fill="#FFB800" />
+  <path
+    d="M 70,102 C 48,102 28,118 24,140 C 18,168 28,198 58,212 C 86,226 122,222 146,202 C 148,200 147,195 142,191 C 128,183 110,185 92,183 C 67,179 51,166 51,148 C 51,131 62,118 78,115 C 82,114 84,102 70,102 Z"
+    fill="#FFB800"
+  />
+
+  <!-- Blue Figure (Right) -->
+  <circle cx="170" cy="62" r="26" fill="#0055D4" />
+  <path
+    d="M 170,102 C 192,102 212,118 216,140 C 222,168 212,198 182,212 C 154,226 118,222 94,202 C 92,200 93,195 98,191 C 112,183 130,185 148,183 C 173,179 189,166 189,148 C 189,131 178,118 162,115 C 158,114 156,102 170,102 Z"
+    fill="#0055D4"
+  />
+
+  <!-- Shield in Center -->
+  <g id="shield">
+    <path
+      d="M 88,96 L 152,96 C 152,96 156,138 120,168 C 84,138 88,96 88,96 Z"
+      fill="#00875A"
+    />
+    <!-- 3 White Bar Chart Bars -->
+    <rect x="101" y="140" width="7" height="14" rx="2" fill="#FFFFFF" />
+    <rect x="113" y="131" width="7" height="23" rx="2" fill="#FFFFFF" />
+    <rect x="125" y="122" width="7" height="32" rx="2" fill="#FFFFFF" />
+    <!-- White Rising Trend Arrow -->
+    <path
+      d="M 100,138 Q 115,126 134,112"
+      stroke="#FFFFFF"
+      stroke-width="4"
+      stroke-linecap="round"
+      fill="none"
+    />
+    <path
+      d="M 124,111 L 135,111 L 135,122"
+      stroke="#FFFFFF"
+      stroke-width="4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+    />
+  </g>
+</svg>
