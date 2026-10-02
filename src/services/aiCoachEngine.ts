@@ -128,7 +128,25 @@ export async function checkGeminiStatus(): Promise<{ active: boolean; primaryMod
 }
 
 export function generateDeterministicCoachReply(query: string, ctx: AICoachContext, lang: 'en' | 'bn' = 'bn'): string {
-  const q = query.toLowerCase();
+  const q = query.trim().toLowerCase();
+
+  // Natural greeting response
+  if (
+    q === 'hi' ||
+    q === 'hello' ||
+    q === 'hey' ||
+    q.startsWith('hi ') ||
+    q.startsWith('hello ') ||
+    q.includes('হাই') ||
+    q.includes('হ্যালো') ||
+    q.includes('সালাম') ||
+    q.includes('কেমন আছো') ||
+    q.includes('how are you')
+  ) {
+    return lang === 'bn'
+      ? `আসসালামু আলাইকুম ${ctx.name}! আমি উপায় এআই সহকারী। আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি? আপনার ওয়ালেট ব্যালেন্স, বাজেট, সঞ্চয়, কিংবা যেকোনো সাধারণ বা আর্থিক বিষয়ে আমাকে প্রশ্ন করতে পারেন।`
+      : `Hello ${ctx.name}! I am your upay AI assistant powered by Google Gemini. How can I help you today? You can ask me anything about your balance, budget, bills, or general financial questions!`;
+  }
 
   if (q.includes('risk') || q.includes('ঝুঁকি') || q.includes('shortage') || q.includes('ঘাটতি')) {
     if (ctx.riskLevel === 'HIGH') {

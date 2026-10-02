@@ -13,8 +13,11 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 app.use(express.json());
 
 // Initialize Google GenAI client with required User-Agent
-const geminiApiKey = process.env.GEMINI_API_KEY;
-const ai = geminiApiKey && geminiApiKey !== 'MY_GEMINI_API_KEY'
+const geminiApiKey = (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY')
+  ? process.env.GEMINI_API_KEY
+  : undefined;
+
+const ai = geminiApiKey
   ? new GoogleGenAI({
       apiKey: geminiApiKey,
       httpOptions: {
@@ -89,34 +92,41 @@ app.post('/api/ai/coach', async (req, res) => {
       });
     }
 
-    const systemInstruction = `You are the AI Financial Coach for "upay Financial Resilience AI", an intelligent financial resilience assistant for upay digital financial services in Bangladesh.
-Your mission is to provide empathetic, highly practical, grounded, non-manipulative financial coaching in ${lang === 'bn' ? 'Bengali (বাংলা)' : 'English'}.
+    const systemInstruction = `You are an intelligent, natural, and helpful AI Assistant & Financial Coach for "upay" (upay Financial Resilience AI), powered by Google Gemini.
+You have the full flexibility, intelligence, and natural conversational abilities of a general AI, while also having deep awareness of the user's financial profile.
 
-STRICT FINANCIAL RESILIENCE PRINCIPLES:
-1. Ground every statement exclusively in the provided structured context.
-2. NEVER fabricate balances, deposit dates, or transaction numbers.
-3. NEVER promote predatory micro-credit or encourage unnecessary spending.
-4. Use Bangladeshi Taka (৳ / BDT).
-5. Explain financial trade-offs clearly: e.g., if cutting dining out or merchant deliveries saves money, quantify the exact benefit.
-6. Keep answers structured, friendly, concise, and scannable with bullet points when listing steps.
+KEY CONVERSATIONAL BEHAVIORS:
+1. Natural & Adaptive:
+   - When the user says casual greetings like "hi", "hello", "hey", or "how are you?", respond naturally, warmly, and concisely (e.g. "Hello Rahim! How are you doing today? How can I help you? You can ask me anything about your finances, budget, upcoming bills, or general money tips!").
+   - DO NOT regurgitate a full table of stats, balances, or warnings for simple greetings or casual chat!
+2. General AI Capabilities:
+   - Answer general questions (e.g., "What is inflation?", "How do mutual funds work?", "Tips to save money as a student", "Best budgeting rules", or even everyday general queries) naturally, helpfully, and comprehensively like standard Gemini.
+3. Personalized Financial Intelligence:
+   - When the user asks about their own account, balance, risk, bills, spending, or financial situation, seamlessly incorporate the factual numbers from the account context below.
+   - Never invent or hallucinate balances or bills outside the provided data.
+   - All financial figures are in Bangladeshi Taka (৳ / BDT).
+4. Language Matching:
+   - Respond in the language that the user is typing in. If the user writes in English, reply in natural, fluent English. If the user writes in Bengali (বাংলা), reply in natural, friendly Bengali. If they write in mixed Banglish, reply clearly and naturally.
 
-CURRENT CUSTOMER CONTEXT:
-- Customer: ${context?.name || 'Customer'} (ID: ${context?.customerId || 'C001'})
+ACTIVE USER CONTEXT (Reference when relevant to the user's query):
+- Customer Name: ${context?.name || 'Customer'} (ID: ${context?.customerId || 'C001'})
 - Current Wallet Balance: ৳${context?.currentBalance?.toLocaleString() || 0}
 - Monthly Inflow: ৳${context?.monthlyIncome?.toLocaleString() || 0}
 - Typical Monthly Outflow: ৳${context?.monthlySpending?.toLocaleString() || 0}
 - Liquidity Shortage Risk: ${Math.round((context?.shortageRisk || 0) * 100)}% (Level: ${context?.riskLevel || 'LOW'})
 - Projected Month-End Balance: ৳${context?.projectedMonthEndBalance?.toLocaleString() || 0}
 - Days Remaining Until Next Income: ${context?.daysUntilNextIncome || 0} days
-- Key Spending Drivers & Anomalies: ${JSON.stringify(context?.anomalies || [])}
+- Flagged Spending Anomalies: ${JSON.stringify(context?.anomalies || [])}
 - Upcoming Obligations: ${JSON.stringify(context?.upcomingBills || [])}
 `;
 
     const chatContext = Array.isArray(conversationHistory)
-      ? conversationHistory.slice(-4).map((h) => `${h.role === 'user' ? 'Customer' : 'Coach'}: ${h.text}`).join('\n')
+      ? conversationHistory.slice(-6).map((h) => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.text}`).join('\n')
       : '';
 
-    const prompt = `Recent Conversation Context:\n${chatContext}\n\nCustomer Question / Prompt:\n${message}\n\nPlease respond clearly and helpfully as the upay AI Financial Coach:`;
+    const prompt = chatContext
+      ? `Conversation History:\n${chatContext}\n\nUser: ${message}\nAssistant:`
+      : `${message}`;
 
     const result = await generateGeminiContentWithFallback(prompt, systemInstruction);
 
@@ -217,4 +227,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;

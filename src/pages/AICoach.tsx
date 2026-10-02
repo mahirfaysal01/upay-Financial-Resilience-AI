@@ -23,12 +23,9 @@ export const AICoach: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const initialGreeting = `আসসালামু আলাইকুম ${customer.name}! আমি আপনার উপায় ফাইন্যান্সিয়াল রেজিলিয়েন্স এআই পরামর্শক। 
-আপনার সাম্প্রতিক লেনদেন, আসন্ন বিল এবং আগামী দিনগুলোর খরচের গতিধারা বিশ্লেষণ করেছি।
-
-বর্তমানে আপনার ওয়ালেট ব্যালেন্স ${formatMoney(profile.currentBalance)} এবং পরবর্তী বেতন আসতে এখনো ${profile.daysUntilNextIncome} দিন বাকি। বর্তমান গতিধারায় আপনার আর্থিক ঘাটতির ঝুঁকি ${Math.round(risk.probability * 100)}% (${risk.riskLevel === 'HIGH' ? 'উচ্চ' : risk.riskLevel === 'MODERATE' ? 'মাঝারি' : 'কম'})।
-
-আপনার আর্থিক ব্যবস্থাপনা ও সঞ্চয় সুরক্ষিত রাখতে আজ আমি কীভাবে সাহায্য করতে পারি?`;
+  const initialGreeting = lang === 'bn'
+    ? `আসসালামু আলাইকুম ${customer.name}! আমি উপায় এআই সহকারী, গুগল জেমিনাই দ্বারা চালিত। আজ আমি আপনাকে কীভাবে সহায়তা করতে পারি? আপনার ওয়ালেট ব্যালেন্স, বাজেট, সঞ্চয়, কিংবা যেকোনো আর্থিক প্রশ্ন আমাকে নির্দ্বিধায় জিজ্ঞাসা করতে পারেন।`
+    : `Hello ${customer.name}! I am your upay AI assistant powered by Google Gemini. How can I help you today? You can ask me anything about your wallet balance, bills, savings goals, or general financial questions!`;
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -50,7 +47,7 @@ export const AICoach: React.FC = () => {
         source: 'gemini-3.8-flash',
       },
     ]);
-  }, [customer.customer_id]);
+  }, [customer.customer_id, lang]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,11 +76,8 @@ export const AICoach: React.FC = () => {
         anomalies
       );
 
-      const promptQuery = lang === 'bn'
-        ? `[Respond in Bengali / বাংলায় সহজ ভাষায় উত্তর দিন]: ${query}`
-        : `[Respond in English with practical financial advice]: ${query}`;
       const history = messages.map((m) => ({ role: m.role, text: m.text }));
-      const response = await askAICoach(promptQuery, coachContext, history, lang);
+      const response = await askAICoach(query, coachContext, history, lang);
 
       const assistantMsg: Message = {
         id: `a_${Date.now()}`,
@@ -101,13 +95,21 @@ export const AICoach: React.FC = () => {
     }
   };
 
-  const suggestedPrompts = [
-    'আমার আর্থিক ঝুঁকি কেন বেশি?',
-    'চলতি মাসে কোন খাতে বেশি খরচ হয়েছে?',
-    'খাবারে ১৫% খরচ কমালে কী লাভ হবে?',
-    'আমি কি আমার ল্যাপটপের লক্ষ্য পূরণ করতে পারব?',
-    'মাস শেষে কেন টাকা ফুরিয়ে যাওয়ার আশঙ্কা তৈরি হয়েছে?',
-  ];
+  const suggestedPrompts = lang === 'bn'
+    ? [
+        'হ্যালো! আমাকে কীভাবে সাহায্য করতে পারো?',
+        'আমার আর্থিক ঘাটতির ঝুঁকি কেমন?',
+        'খাবারে ১৫% খরচ কমালে কী লাভ হবে?',
+        'আমার ল্যাপটপ কেনার সঞ্চয় লক্ষ্য কেমন চলছে?',
+        'টাকা জমানোর সহজ কিছু নিয়ম বলো',
+      ]
+    : [
+        'Hi! How can you help me with my money?',
+        'Why is my shortage risk flagged?',
+        'What happens if I cut food spending by 15%?',
+        'How can I save more money each month?',
+        'Explain the 50/30/20 budgeting rule',
+      ];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

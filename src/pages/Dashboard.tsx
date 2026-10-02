@@ -96,8 +96,8 @@ export const Dashboard: React.FC = () => {
   // Synchronize greeting message and critical financial alerts on customer or language change
   useEffect(() => {
     const greeting = lang === 'bn'
-      ? `আসসালামু আলাইকুম ${customer.name === 'Rahim Hasan' ? 'রহিম' : customer.name}! আপনার বর্তমান খরচের গতিপথ অনুযায়ী আগামী ${toBengaliNumber(profile.daysUntilNextIncome)} দিনের মধ্যে ওয়ালেট ঘাটতির ঝুঁকি রয়েছে। খাবার ও ক্যাশ-আউট খরচ কিছুটা কমিয়ে কীভাবে মাস শেষ সুরক্ষিত করবেন তা জানতে আমাকে প্রশ্ন করতে পারেন।`
-      : `Hello ${customer.name}! Based on your current spending trajectory, you face a liquidity risk in the next ${profile.daysUntilNextIncome} days before your next deposit. Ask me how trimming dining or cash-out fees can help protect your month-end.`;
+      ? `আসসালামু আলাইকুম ${customer.name === 'Rahim Hasan' ? 'রহিম' : customer.name}! আমি গুগল জেমিনাই চালিত উপায় এআই সহকারী। আজ আপনাকে কীভাবে সাহায্য করতে পারি? আপনার ওয়ালেট, বাজেট, আসন্ন বিল কিংবা যেকোনো আর্থিক বিষয়ে প্রশ্ন করতে পারেন।`
+      : `Hello ${customer.name}! I am your upay AI assistant powered by Google Gemini. How can I help you today? Feel free to ask me anything about your wallet, upcoming bills, budget, or general financial topics!`;
 
     setAdviceMessages([{ role: 'assistant', text: greeting }]);
 
@@ -133,10 +133,7 @@ export const Dashboard: React.FC = () => {
 
     try {
       const coachContext = buildCoachContext(profile, risk, forecast.monthEndForecast, anomalies);
-      const instruction = lang === 'bn'
-        ? `[বাংলায় সংক্ষিপ্ত ও ব্যবহারিক পরামর্শ দিন]: ${q}`
-        : `[Provide concise, actionable advice in English with ৳ figures]: ${q}`;
-      const res = await askAICoach(instruction, coachContext, adviceMessages, lang);
+      const res = await askAICoach(q, coachContext, adviceMessages, lang);
       setAdviceMessages((prev) => [
         ...prev,
         {
