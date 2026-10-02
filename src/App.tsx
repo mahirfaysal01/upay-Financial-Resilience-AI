@@ -1,14 +1,14 @@
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import { FinancialProvider } from './context/FinancialContext';
 import { AppLayout } from './components/AppLayout';
 
 export default function App() {
   return (
     <FinancialProvider>
-      <BrowserRouter>
+      <HashRouter>
         <AppLayout />
-      </BrowserRouter>
+      </HashRouter>
     </FinancialProvider>
   );
 }
