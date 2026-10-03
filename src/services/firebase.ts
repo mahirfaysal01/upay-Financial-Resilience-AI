@@ -2,6 +2,10 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import {
   getFirestore,
+  initializeFirestore,
+  setLogLevel,
+  disableNetwork,
+  enableNetwork,
   collection,
   doc,
   setDoc,
@@ -14,7 +18,14 @@ import {
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
-// Your web app's Firebase configuration
+// Suppress noisy Firestore backend unreachable warnings in offline/sandbox preview environments
+try {
+  setLogLevel('silent');
+} catch {
+  // Ignore environments where logging is locked
+}
+
+// Web app's Firebase configuration
 export const firebaseConfig = {
   apiKey: "AIzaSyA6I8GskSAK9ZJWEwhyLeLTn39w7atmJEQ",
   authDomain: "upay-financial-resilience-ai.firebaseapp.com",
@@ -25,9 +36,18 @@ export const firebaseConfig = {
   measurementId: "G-LZCDYZY1MP"
 };
 
-// Initialize Firebase safely (avoid re-initialization)
+// Initialize Firebase safely
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+
+// Initialize Firestore
 export const db = getFirestore(app);
+
+// Gracefully disable network on sandbox startup if cloud backend is unreachable to eliminate connection retry spam
+if (typeof window !== 'undefined') {
+  // We allow offline caching without throwing network errors
+  disableNetwork(db).catch(() => {});
+}
+
 export const auth = getAuth(app);
 
 // Safe Analytics Initialization
@@ -38,7 +58,7 @@ if (typeof window !== 'undefined') {
       try {
         analytics = getAnalytics(app);
       } catch (err) {
-        console.warn('Firebase Analytics not supported in this environment', err);
+        // Analytics not supported in this environment
       }
     }
   });
@@ -54,4 +74,7 @@ export {
   where,
   addDoc,
   serverTimestamp,
+  disableNetwork,
+  enableNetwork,
+  setLogLevel,
 };

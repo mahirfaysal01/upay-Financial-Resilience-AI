@@ -351,7 +351,7 @@ export const HomePage: React.FC = () => {
   ];
 
   return (
-    <div className="route-fade-slide relative min-h-screen bg-[var(--bg)] text-[var(--ink)] overflow-x-hidden selection:bg-[var(--yellow)] selection:text-[var(--navy)]">
+    <div className="route-fade-slide relative min-h-screen bg-[var(--bg)] text-[var(--ink)] overflow-x-clip selection:bg-[var(--yellow)] selection:text-[var(--navy)]">
       {/* 1. TOP YELLOW SCROLL PROGRESS BAR */}
       <div
         className="fixed top-0 left-0 h-[3.5px] bg-[var(--yellow)] z-[100] transition-all duration-75 shadow-xs"
@@ -381,22 +381,22 @@ export const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* 2. FLOATING NAV */}
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrollY > 40
-            ? 'bg-white/95 backdrop-blur-md border-b border-[var(--line)] shadow-sm py-3'
-            : 'bg-transparent py-5'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      {/* 2. FLOATING STICKY NAV WITH RADIUS */}
+      <header className="fixed top-2.5 sm:top-3.5 left-0 right-0 z-50 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 pointer-events-none">
+        <div
+          className={`pointer-events-auto rounded-[22px] sm:rounded-full transition-all duration-300 px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between border ${
+            scrollY > 15
+              ? 'bg-white/95 backdrop-blur-xl border-slate-200/90 shadow-[0_10px_30px_rgba(11,31,75,0.08)]'
+              : 'bg-white/85 backdrop-blur-md border-slate-200/60 shadow-xs'
+          }`}
+        >
           {/* Logo on Left */}
           <Link
             to="/"
             className="flex items-center gap-2 group transition-transform hover:opacity-95"
             aria-label="upay Financial Resilience AI Home"
           >
-            <UpayLogo height={38} alt="upay" />
+            <UpayLogo height={36} alt="upay" />
           </Link>
 
           {/* Right: Demo View Link & Yellow Primary Button */}
@@ -426,7 +426,7 @@ export const HomePage: React.FC = () => {
         </div>
       </header>
 
-      <main className="pt-24 sm:pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 sm:space-y-24">
+      <main className="pt-20 sm:pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 sm:space-y-24">
         {/* 3. HERO (Open, Modern Canvas Layout - Blue card removed) */}
         <section
           className={`relative pt-4 sm:pt-8 pb-4 sm:pb-8 transition-all duration-400 ease-out ${

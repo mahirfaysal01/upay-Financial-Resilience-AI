@@ -94,16 +94,36 @@ export const Navbar: React.FC = () => {
               <span>{lang === 'bn' ? 'এআই রায়' : 'AI Verdict'}</span>
             </NavLink>
 
-            {/* Real-time Firebase Cloud Connection Indicator with Ping Animation */}
+            {/* Real-time Storage / Cloud Indicator */}
             <div
-              className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50/90 border border-emerald-200/80 text-emerald-800 text-[11.5px] font-semibold tracking-tight shadow-xs"
-              title={lang === 'bn' ? `রিয়েল-টাইম ফায়ারবেস সংযুক্ত (${firebaseProjectId})` : `Firebase Connected (${firebaseProjectId})`}
+              className={`hidden lg:flex items-center gap-2 px-3 py-1 rounded-full text-[11.5px] font-semibold tracking-tight shadow-xs ${
+                isFirebaseConnected
+                  ? 'bg-emerald-50/90 border border-emerald-200/80 text-emerald-800'
+                  : 'bg-amber-50/90 border border-amber-200/80 text-amber-850'
+              }`}
+              title={
+                isFirebaseConnected
+                  ? (lang === 'bn' ? `ক্লাউড সিঙ্ক সক্রিয় (${firebaseProjectId})` : `Cloud Sync Active (${firebaseProjectId})`)
+                  : (lang === 'bn' ? 'অফলাইন ও স্মার্ট লোকাল ক্যাশ সক্রিয়' : 'Offline / Smart Local Storage Active')
+              }
             >
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    isFirebaseConnected ? 'bg-emerald-400' : 'bg-amber-400'
+                  }`}
+                ></span>
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${
+                    isFirebaseConnected ? 'bg-emerald-500' : 'bg-amber-500'
+                  }`}
+                ></span>
               </span>
-              <span>{lang === 'bn' ? 'ফায়ারবেস লাইভ' : 'Firebase Live'}</span>
+              <span>
+                {isFirebaseConnected
+                  ? (lang === 'bn' ? 'ক্লাউড লাইভ' : 'Cloud Live')
+                  : (lang === 'bn' ? 'স্মার্ট লোকাল ক্যাশ' : 'Local Cache')}
+              </span>
             </div>
 
             {/* Customer Persona Switcher */}

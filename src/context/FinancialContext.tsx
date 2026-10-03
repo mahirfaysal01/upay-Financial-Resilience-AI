@@ -91,7 +91,7 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const [customGoals, setCustomGoals] = useState<Record<string, SavingsGoal[]>>({});
   const [firebaseLiveGoals, setFirebaseLiveGoals] = useState<Record<string, SavingsGoal[]>>({});
-  const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(true);
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(false);
   const firebaseProjectId = "upay-financial-resilience-ai";
 
   // Reset or adapt interventions on customer switch
