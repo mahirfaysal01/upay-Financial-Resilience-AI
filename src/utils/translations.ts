@@ -215,7 +215,7 @@ export const translations = {
     coach: {
       badge: 'Generative AI Translation Layer',
       title: 'AI Financial Coach',
-      subtitle: 'Powered by Google Gemini 3.8 Flash. Translates structured cash-flow analytics and risk models into empathetic, non-manipulative guidance.',
+      subtitle: 'Powered by upay AI Financial Resilience Engine. Translates structured cash-flow analytics and risk models into empathetic, non-manipulative guidance.',
       walletContext: 'Wallet Context',
       shortageRisk: 'Shortage Risk',
       groundedTitle: 'Grounded Model Context',
@@ -227,7 +227,7 @@ export const translations = {
       suggestedQuestions: 'Suggested Questions',
       inputPlaceholder: 'Ask about your risk, spending anomalies, or savings plan...',
       askBtn: 'Ask Coach',
-      synthesizing: 'Synthesizing structured context with Gemini...',
+      synthesizing: 'Synthesizing structured context with upay AI...',
     },
     profile: {
       badge: 'Profile Overview',
@@ -462,7 +462,7 @@ export const translations = {
     coach: {
       badge: 'জেনারেটিভ এআই অনুবাদক',
       title: 'এআই আর্থিক পরামর্শক',
-      subtitle: 'গুগল জেমিনাই ৩.৮ ফ্ল্যাশ দ্বারা চালিত। আপনার ক্যাশ-ফ্লো ও ঝুঁকির জটিল উপাত্তকে সহজ ও মানবিক ভাষায় বুঝিয়ে দেয়।',
+      subtitle: 'উপায় এআই রেজিলিয়েন্স ইঞ্জিন দ্বারা চালিত। আপনার ক্যাশ-ফ্লো ও ঝুঁকির জটিল উপাত্তকে সহজ ও মানবিক ভাষায় বুঝিয়ে দেয়।',
       walletContext: 'ওয়ালেট অবস্থা',
       shortageRisk: 'ঘাটতি ঝুঁকি',
       groundedTitle: 'প্রমাণিত মডেল তথ্য',
@@ -474,7 +474,7 @@ export const translations = {
       suggestedQuestions: 'প্রস্তাবিত প্রশ্নাবলী',
       inputPlaceholder: 'আপনার ঝুঁকি, অস্বাভাবিক খরচ বা সঞ্চয় পরিকল্পনা নিয়ে প্রশ্ন করুন...',
       askBtn: 'জিজ্ঞাসা করুন',
-      synthesizing: 'জেমিনাই দিয়ে তথ্য বিশ্লেষণ করা হচ্ছে...',
+      synthesizing: 'উপায় এআই দিয়ে তথ্য বিশ্লেষণ করা হচ্ছে...',
     },
     profile: {
       badge: 'প্রোফাইল ওভারভিউ',

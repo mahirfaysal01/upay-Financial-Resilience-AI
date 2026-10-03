@@ -78,8 +78,8 @@ export async function askAICoach(
       if (data && data.reply) {
         return {
           text: data.reply,
-          source: data.source || 'gemini-3.8-flash',
-          model: data.model,
+          source: 'upay AI',
+          model: 'upay AI',
         };
       }
     }
@@ -89,7 +89,7 @@ export async function askAICoach(
 
   // Graceful deterministic fallback using structured financial engine data
   const fallbackReply = generateDeterministicCoachReply(userQuery, context, lang);
-  return { text: fallbackReply, source: 'rule-engine-fallback' };
+  return { text: fallbackReply, source: 'rule-engine-fallback', model: 'upay AI' };
 }
 
 export async function fetchGeminiDeepInsights(
@@ -106,11 +106,11 @@ export async function fetchGeminiDeepInsights(
     if (res.ok) {
       const data = await res.json();
       if (data && data.insights) {
-        return { text: data.insights, source: data.source || 'gemini-3.8-flash' };
+        return { text: data.insights, source: 'upay AI' };
       }
     }
   } catch (e) {
-    console.warn('Failed to fetch deep insights from Gemini:', e);
+    console.warn('Failed to fetch deep insights from AI:', e);
   }
   return { text: null, source: 'rule-engine-fallback' };
 }
@@ -122,9 +122,9 @@ export async function checkGeminiStatus(): Promise<{ active: boolean; primaryMod
       return await res.json();
     }
   } catch (e) {
-    console.warn('Error checking Gemini status:', e);
+    console.warn('Error checking AI status:', e);
   }
-  return { active: false, primaryModel: 'gemini-3.8-flash', fallbackModel: 'gemini-3.1-flash-lite' };
+  return { active: false, primaryModel: 'upay AI Resilience Engine', fallbackModel: 'upay Local Engine' };
 }
 
 export function generateDeterministicCoachReply(query: string, ctx: AICoachContext, lang: 'en' | 'bn' = 'bn'): string {

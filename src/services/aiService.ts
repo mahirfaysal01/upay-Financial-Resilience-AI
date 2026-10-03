@@ -61,7 +61,7 @@ export async function fetchFinancialVerdict(
   data: Record<string, any>,
   options?: FetchVerdictOptions
 ): Promise<FinancialVerdict> {
-  const requestedModel = options?.model || 'google/gemini-2.0-flash-lite';
+  const requestedModel = options?.model || 'upay AI';
   const toaster = options?.toaster;
 
   options?.onStart?.();
@@ -80,7 +80,7 @@ export async function fetchFinancialVerdict(
         const liveVerdict: FinancialVerdict = {
           ...serverData.verdict,
           evaluatedAt: new Date().toISOString(),
-          modelUsed: serverData.model || requestedModel,
+          modelUsed: 'upay AI',
         };
 
         if (toaster?.notifySuccess) {
@@ -103,7 +103,7 @@ export async function fetchFinancialVerdict(
   if (isAiMockMode) {
     const rawMock = getMockFinancialVerdictResponse(data);
     const parsedMock: FinancialVerdict = JSON.parse(rawMock);
-    parsedMock.modelUsed = `${requestedModel} (Resilience Engine)`;
+    parsedMock.modelUsed = 'upay AI';
 
     if (toaster?.notifySuccess) {
       toaster.notifySuccess(
@@ -163,7 +163,7 @@ ${JSON.stringify(data, null, 2)}`;
 
       const cleanedJson = cleanJsonOutput(rawContent);
       const parsed: FinancialVerdict = JSON.parse(cleanedJson);
-      parsed.modelUsed = response.data?.model || model;
+      parsed.modelUsed = 'upay AI';
       parsed.evaluatedAt = new Date().toISOString();
 
       if (toaster?.notifySuccess) {
@@ -199,7 +199,7 @@ ${JSON.stringify(data, null, 2)}`;
   }
 
   const fallbackMock = JSON.parse(getMockFinancialVerdictResponse(data));
-  fallbackMock.modelUsed = `${requestedModel} (Error Fallback)`;
+  fallbackMock.modelUsed = 'upay AI';
   options?.onError?.(lastError instanceof Error ? lastError : new Error(errorMessage));
 
   return fallbackMock;
@@ -228,7 +228,7 @@ export function useFinancialVerdict() {
 
       try {
         const result = await fetchFinancialVerdict(data, {
-          model: modelName || 'google/gemini-2.0-flash-lite',
+          model: modelName || 'upay AI',
           toaster: {
             notifySuccess,
             notifyError,

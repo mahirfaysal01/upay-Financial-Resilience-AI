@@ -101,7 +101,7 @@ aiClient.interceptors.response.use(
       const mockResponse: AxiosResponse = {
         data: {
           id: `mock-verdict-${Date.now()}`,
-          model: 'google/gemini-2.0-flash-lite:mock',
+          model: 'upay-ai',
           choices: [
             {
               message: {

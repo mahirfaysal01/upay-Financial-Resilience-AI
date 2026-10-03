@@ -174,9 +174,9 @@ app.get('/api/ai/status', (_req, res) => {
     active: isAvailable,
     openRouterConfigured: !!openRouterApiKey,
     apiKeyConfigured: isAvailable,
-    primaryModel: openRouterApiKey ? 'google/gemini-2.5-flash (OpenRouter)' : 'gemini-3.8-flash',
-    fallbackModel: openRouterApiKey ? 'google/gemini-2.5-flash-lite' : 'gemini-3.1-flash-lite',
-    provider: openRouterApiKey ? 'OpenRouter AI (Google Gemini 2.5 Flash)' : 'Google Gemini Generative AI',
+    primaryModel: 'upay AI Resilience Engine',
+    fallbackModel: 'upay Local Resilience Engine',
+    provider: 'upay Financial Intelligence',
   });
 });
 
@@ -231,9 +231,9 @@ ACTIVE USER CONTEXT (Reference when relevant to the user's query):
     const result = await generateAIContent(prompt, systemInstruction);
 
     return res.status(200).json({
-      source: result.model,
+      source: 'upay AI',
       reply: result.text,
-      model: result.model,
+      model: 'upay AI',
     });
   } catch (error: any) {
     console.warn('AI proxy error:', error?.message || error);
@@ -277,9 +277,9 @@ Provide your output as concise, readable text with clear bullet points.`;
     const result = await generateAIContent(prompt);
 
     return res.status(200).json({
-      source: result.model,
+      source: 'upay AI',
       insights: result.text,
-      model: result.model,
+      model: 'upay AI',
     });
   } catch (error: any) {
     console.warn('AI deep insights error:', error?.message || error);
@@ -328,15 +328,15 @@ CRITICAL: Output pure JSON only. Do not add markdown backticks, explanations, or
         cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
       }
       parsed = JSON.parse(cleaned);
-      parsed.modelUsed = result.model;
+      parsed.modelUsed = 'upay AI';
     } catch {
       parsed = null;
     }
 
     return res.status(200).json({
-      source: result.model,
+      source: 'upay AI',
       verdict: parsed,
-      model: result.model,
+      model: 'upay AI',
     });
   } catch (error: any) {
     console.warn('AI verdict endpoint error:', error?.message || error);

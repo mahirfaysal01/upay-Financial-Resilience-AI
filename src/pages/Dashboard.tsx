@@ -379,7 +379,7 @@ export const Dashboard: React.FC = () => {
                 <Sparkles className={`w-4 h-4 ${isVerdictLoading ? 'animate-spin' : 'animate-pulse'}`} />
                 <span>
                   {isVerdictLoading
-                    ? (lang === 'bn' ? 'এআই মডেল বিশ্লেষণ করছে...' : 'Analyzing with OpenRouter AI...')
+                    ? (lang === 'bn' ? 'এআই বিশ্লেষণ চলছে...' : 'Analyzing with AI Engine...')
                     : (lang === 'bn' ? '✨ এআই তাৎক্ষণিক রায় জানুন' : '✨ Instant AI Verdict')}
                 </span>
               </button>
@@ -480,7 +480,7 @@ export const Dashboard: React.FC = () => {
               <div className="space-y-2 text-center sm:text-left flex-1">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-wider">
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-                  <span>{lang === 'bn' ? 'ওপেনরাউটার এআই গাণিতিক বিশ্লেষণ চলছে' : 'OpenRouter AI Model Inquiring'}</span>
+                  <span>{lang === 'bn' ? 'উপায় এআই গাণিতিক বিশ্লেষণ চলছে' : 'upay AI Resilience Engine Inquiring'}</span>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-heading font-extrabold text-white">
                   {lang === 'bn'
@@ -515,7 +515,7 @@ export const Dashboard: React.FC = () => {
                         {lang === 'bn' ? 'এআই তাৎক্ষণিক রেজিলিয়েন্স রায়' : 'Instant AI Resilience Verdict'}
                       </h3>
                       <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/25 text-amber-300 border border-amber-400/40">
-                        {verdict.modelUsed || 'Gemini Flash'}
+                        {lang === 'bn' ? 'উপায় এআই' : 'upay AI'}
                       </span>
                     </div>
                     <p className="text-xs text-white/60">
@@ -642,7 +642,7 @@ export const Dashboard: React.FC = () => {
                     {lang === 'bn' ? 'তাৎক্ষণিক এআই রেজিলিয়েন্স বিশ্লেষণ' : 'Instant AI Resilience Analysis'}
                   </span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40">
-                    OpenRouter Active
+                    {lang === 'bn' ? 'এআই সক্রিয়' : 'AI Active'}
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-white/75 max-w-xl">

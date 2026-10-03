@@ -48,7 +48,7 @@ export const AICoach: React.FC = () => {
       role: 'assistant',
       text: initialGreeting,
       timestamp: 'এখনই',
-      source: 'google/gemini-2.5-flash',
+      source: 'upay AI',
     },
   ]);
 
@@ -59,7 +59,7 @@ export const AICoach: React.FC = () => {
         role: 'assistant',
         text: initialGreeting,
         timestamp: 'এখনই',
-        source: 'google/gemini-2.5-flash',
+        source: 'upay AI',
       },
     ]);
   }, [customer.customer_id, lang]);
@@ -185,7 +185,7 @@ export const AICoach: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] text-[11.5px] font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-              <span>{lang === 'bn' ? 'ওপেনরাউটার নিউরাল এআই ইঞ্জিন' : 'OpenRouter Neural Engine'}</span>
+              <span>{lang === 'bn' ? 'উপায় রেজিলিয়েন্স এআই ইঞ্জিন' : 'upay Resilience AI Engine'}</span>
             </div>
             <h2 className="text-[var(--brand-primary)] text-xl font-heading font-extrabold mt-1">
               {lang === 'bn' ? 'উপায় এআই আর্থিক পরামর্শক' : 'upay AI Financial Coach'}
@@ -294,9 +294,9 @@ export const AICoach: React.FC = () => {
                   >
                     <div className="flex items-center gap-1.5">
                       <span>{msg.timestamp}</span>
-                      {msg.source && msg.role === 'assistant' && (
+                      {msg.role === 'assistant' && (
                         <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">
-                          {msg.model || 'Gemini 2.5 Flash'}
+                          {lang === 'bn' ? 'উপায় এআই' : 'upay AI'}
                         </span>
                       )}
                     </div>

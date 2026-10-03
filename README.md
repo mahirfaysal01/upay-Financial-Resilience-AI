@@ -3,8 +3,8 @@
 
 [![Hackathon](https://img.shields.io/badge/Hackathon-DIU%20CPC%20%C3%97%20upay%20AI%20Hackathon%202026-0B1F4B?style=for-the-badge&logo=google)](https://upaybd.com)
 [![Track](https://img.shields.io/badge/Track%2003-Customer%20Innovation%20%26%20Financial%20Independence-FFC20E?style=for-the-badge&labelColor=0B1F4B)](https://upaybd.com)
-[![Tech Stack](https://img.shields.io/badge/Stack-React%20%7C%20TypeScript%20%7C%20Express%20%7C%20Gemini%20AI-1FA971?style=for-the-badge)](https://react.dev)
-[![Status](https://img.shields.io/badge/Status-National%20Competition%20Ready-E5484D?style=for-the-badge)](https://ais-dev-6kpwjgigj7fyiml7giabiz-960075932383.asia-southeast1.run.app)
+[![Tech Stack](https://img.shields.io/badge/Stack-React%20%7C%20TypeScript%20%7C%20Express%20%7C%20upay%20AI-1FA971?style=for-the-badge)](https://react.dev)
+[![Status](https://img.shields.io/badge/Status-Prototype%20Active-1FA971?style=for-the-badge)](https://ais-dev-6kpwjgigj7fyiml7giabiz-960075932383.asia-southeast1.run.app)
 
 ---
 
@@ -83,7 +83,7 @@ Burn Rate (7d/30d), Discretionary Ratio, Cash-Out Reliance Index, Spending Accel
 SHAP-Style Feature Attribution ("Why is your risk 82%?") + Rule-Based Intervention Recommender
                     ↓
 [ LAYER 5: GENERATIVE AI & EXPLANATION ]
-Server-Side Google Gemini 2.5 / 3.8 Flash (Natural Bengali & English Translation)
+Server-Side upay AI Translation Layer (Natural Bengali & English Translation)
                     ↓
 [ LAYER 6: ACTION & USER EXPERIENCE ]
 Fintech Dashboard • Interactive Simulator • Savings Copilot • Voice-Assisted AI Coach
@@ -216,7 +216,7 @@ Fintech AI directly influences people's livelihoods. Our platform adheres to str
 * **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, Recharts, Lucide Icons.
 * **State Management:** React Context API (`FinancialContext`, `NotificationContext`).
 * **Backend:** Node.js, Express, tsx.
-* **AI & Machine Learning:** Google GenAI SDK (`@google/genai` with `gemini-3.8-flash` & `gemini-2.5-flash`), OpenRouter multi-model fallback, in-memory isolation forest.
+* **AI & Machine Learning:** upay AI Resilience Engine with intelligent multi-model routing and automated fallback, in-memory isolation forest.
 
 ### Directory Structure:
 ```
@@ -250,7 +250,7 @@ Fintech AI directly influences people's livelihoods. Our platform adheres to str
 │   │   ├── anomalyDetectionEngine.ts# Isolation forest anomaly detection
 │   │   ├── simulationEngine.ts     # What-If recalculator
 │   │   ├── savingsPlannerEngine.ts # Feasibility evaluator
-│   │   ├── aiCoachEngine.ts        # Gemini AI prompt orchestration
+│   │   ├── aiCoachEngine.ts        # AI prompt orchestration & context grounding
 │   │   └── aiService.ts            # Client-server AI dispatcher
 │   ├── types/
 │   │   └── financial.ts       # Domain TypeScript interfaces
@@ -320,8 +320,8 @@ Checks the health of the AI subsystem.
   ```json
   {
     "active": true,
-    "provider": "Google Gemini Generative AI",
-    "primaryModel": "gemini-3.8-flash"
+    "provider": "upay Financial Intelligence",
+    "primaryModel": "upay AI Resilience Engine"
   }
   ```
 
@@ -338,7 +338,7 @@ Sends user queries to the context-grounded AI Financial Coach.
 * **Response:**
   ```json
   {
-    "source": "google/gemini-2.5-flash",
+    "source": "upay AI",
     "reply": "ক্যাশ-আউট ফি কমাতে আপনি এজেন্ট থেকে নগদ উত্তোলনের পরিবর্তে উপায় মার্চেন্ট কিউআর পে ব্যবহার করতে পারেন..."
   }
   ```

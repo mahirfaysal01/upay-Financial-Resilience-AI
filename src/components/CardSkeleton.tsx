@@ -27,7 +27,7 @@ export interface CardSkeletonProps {
  * 
  * Reusable skeleton loader that precisely matches the .upay-card styling, border-radius,
  * and padding while utilizing the .skeleton-shimmer animation class. Provides a smooth,
- * high-fidelity placeholder experience while AI models, Firestore, or Gemini services are fetching data.
+ * high-fidelity placeholder experience while AI resilience models or data services are fetching data.
  */
 export const CardSkeleton: React.FC<CardSkeletonProps> = ({
   variant = 'default',
