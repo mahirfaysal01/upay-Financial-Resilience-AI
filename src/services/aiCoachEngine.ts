@@ -51,7 +51,7 @@ export function buildCoachContext(
 
 export interface AICoachResponse {
   text: string;
-  source: 'gemini-3.8-flash' | 'gemini-3.1-flash-lite' | 'rule-engine-fallback';
+  source: string;
   model?: string;
 }
 

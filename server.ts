@@ -12,7 +12,12 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
 app.use(express.json());
 
-// Initialize Google GenAI client with required User-Agent
+// OpenRouter API Key for high-performance AI routing (configured via environment)
+const openRouterApiKey = (process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY !== 'MY_OPENROUTER_API_KEY')
+  ? process.env.OPENROUTER_API_KEY
+  : undefined;
+
+// Initialize Google GenAI client with required User-Agent if GEMINI_API_KEY is provided
 const geminiApiKey = (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY')
   ? process.env.GEMINI_API_KEY
   : undefined;
@@ -27,6 +32,72 @@ const ai = geminiApiKey
       },
     })
   : null;
+
+/**
+ * Resilient OpenRouter Content Generation with automated model fallback
+ * Tries google/gemini-2.5-flash first with bounded max_tokens for speed and reliable quota;
+ * smoothly switches to google/gemini-2.5-flash-lite if needed.
+ */
+async function generateOpenRouterContent(prompt: string, systemInstruction?: string) {
+  if (!openRouterApiKey) {
+    throw new Error('OpenRouter API key is not configured');
+  }
+
+  const modelCandidates = ['google/gemini-2.5-flash', 'google/gemini-2.5-flash-lite'];
+  let lastError: any = null;
+
+  for (const model of modelCandidates) {
+    try {
+      const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [];
+      if (systemInstruction) {
+        messages.push({ role: 'system', content: systemInstruction });
+      }
+      messages.push({ role: 'user', content: prompt });
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openRouterApiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://upaybd.com',
+          'X-Title': 'upay Financial Resilience AI',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          max_tokens: 1000,
+          temperature: 0.7,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`OpenRouter (${model}) status ${response.status}: ${JSON.stringify(errorData)}`);
+      }
+
+      const data: any = await response.json();
+      const text = data?.choices?.[0]?.message?.content;
+
+      if (text && typeof text === 'string') {
+        return {
+          text: text.trim(),
+          model,
+        };
+      }
+    } catch (err: any) {
+      console.warn(`[OpenRouter API] Model ${model} failed, attempting next candidate. Error:`, err?.message || err);
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('All OpenRouter models failed');
+}
 
 /**
  * Resilient Gemini Content Generation with automated fallback
@@ -48,7 +119,6 @@ async function generateGeminiContentWithFallback(prompt: string, systemInstructi
         config.systemInstruction = systemInstruction;
       }
 
-      // Add a 12s timeout so slow or retrying 503 requests fail over swiftly
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`Timeout with model ${model}`)), 12000)
       );
@@ -76,30 +146,53 @@ async function generateGeminiContentWithFallback(prompt: string, systemInstructi
   throw lastError || new Error('All Gemini models failed');
 }
 
+/**
+ * Master multi-provider AI dispatcher:
+ * 1. OpenRouter (Gemini 2.5 Flash / Flash-lite) with provided API key
+ * 2. Direct Google GenAI SDK (if configured)
+ */
+async function generateAIContent(prompt: string, systemInstruction?: string) {
+  if (openRouterApiKey) {
+    try {
+      return await generateOpenRouterContent(prompt, systemInstruction);
+    } catch (err: any) {
+      console.warn('[AI Routing] OpenRouter request failed, checking Gemini SDK fallback:', err?.message || err);
+    }
+  }
+
+  if (ai) {
+    return await generateGeminiContentWithFallback(prompt, systemInstruction);
+  }
+
+  throw new Error('No functional AI API key configured');
+}
+
 // 1. AI API Status Endpoint
 app.get('/api/ai/status', (_req, res) => {
+  const isAvailable = !!openRouterApiKey || !!ai;
   res.json({
-    active: !!ai,
-    apiKeyConfigured: !!geminiApiKey && geminiApiKey !== 'MY_GEMINI_API_KEY',
-    primaryModel: 'gemini-3.8-flash',
-    fallbackModel: 'gemini-3.1-flash-lite',
-    provider: 'Google Gemini Generative AI',
+    active: isAvailable,
+    openRouterConfigured: !!openRouterApiKey,
+    apiKeyConfigured: isAvailable,
+    primaryModel: openRouterApiKey ? 'google/gemini-2.5-flash (OpenRouter)' : 'gemini-3.8-flash',
+    fallbackModel: openRouterApiKey ? 'google/gemini-2.5-flash-lite' : 'gemini-3.1-flash-lite',
+    provider: openRouterApiKey ? 'OpenRouter AI (Google Gemini 2.5 Flash)' : 'Google Gemini Generative AI',
   });
 });
 
-// 2. Server-side Gemini AI Coach endpoint
+// 2. Server-side AI Coach endpoint
 app.post('/api/ai/coach', async (req, res) => {
   try {
     const { message, context, conversationHistory, lang = 'bn' } = req.body;
 
-    if (!ai) {
+    if (!openRouterApiKey && !ai) {
       return res.status(200).json({
         source: 'rule-engine-fallback',
         reply: null,
       });
     }
 
-    const systemInstruction = `You are an intelligent, natural, and helpful AI Assistant & Financial Coach for "upay" (upay Financial Resilience AI), powered by Google Gemini.
+    const systemInstruction = `You are an intelligent, natural, and helpful AI Assistant & Financial Coach for "upay" (upay Financial Resilience AI).
 You have the full flexibility, intelligence, and natural conversational abilities of a general AI, while also having deep awareness of the user's financial profile.
 
 KEY CONVERSATIONAL BEHAVIORS:
@@ -107,7 +200,7 @@ KEY CONVERSATIONAL BEHAVIORS:
    - When the user says casual greetings like "hi", "hello", "hey", or "how are you?", respond naturally, warmly, and concisely (e.g. "Hello Rahim! How are you doing today? How can I help you? You can ask me anything about your finances, budget, upcoming bills, or general money tips!").
    - DO NOT regurgitate a full table of stats, balances, or warnings for simple greetings or casual chat!
 2. General AI Capabilities:
-   - Answer general questions (e.g., "What is inflation?", "How do mutual funds work?", "Tips to save money as a student", "Best budgeting rules", or even everyday general queries) naturally, helpfully, and comprehensively like standard Gemini.
+   - Answer general questions (e.g., "What is inflation?", "How do mutual funds work?", "Tips to save money as a student", "Best budgeting rules", or everyday queries) naturally, helpfully, and comprehensively.
 3. Personalized Financial Intelligence:
    - When the user asks about their own account, balance, risk, bills, spending, or financial situation, seamlessly incorporate the factual numbers from the account context below.
    - Never invent or hallucinate balances or bills outside the provided data.
@@ -135,7 +228,7 @@ ACTIVE USER CONTEXT (Reference when relevant to the user's query):
       ? `Conversation History:\n${chatContext}\n\nUser: ${message}\nAssistant:`
       : `${message}`;
 
-    const result = await generateGeminiContentWithFallback(prompt, systemInstruction);
+    const result = await generateAIContent(prompt, systemInstruction);
 
     return res.status(200).json({
       source: result.model,
@@ -143,7 +236,7 @@ ACTIVE USER CONTEXT (Reference when relevant to the user's query):
       model: result.model,
     });
   } catch (error: any) {
-    console.warn('Gemini proxy error:', error?.message || error);
+    console.warn('AI proxy error:', error?.message || error);
     return res.status(200).json({
       source: 'rule-engine-fallback',
       reply: null,
@@ -152,12 +245,12 @@ ACTIVE USER CONTEXT (Reference when relevant to the user's query):
   }
 });
 
-// 3. Server-side Gemini Deep Insights endpoint
+// 3. Server-side AI Deep Insights endpoint
 app.post('/api/ai/deep-insights', async (req, res) => {
   try {
     const { context, lang = 'bn' } = req.body;
 
-    if (!ai) {
+    if (!openRouterApiKey && !ai) {
       return res.status(200).json({
         source: 'rule-engine-fallback',
         insights: null,
@@ -181,7 +274,7 @@ Focus on:
 
 Provide your output as concise, readable text with clear bullet points.`;
 
-    const result = await generateGeminiContentWithFallback(prompt);
+    const result = await generateAIContent(prompt);
 
     return res.status(200).json({
       source: result.model,
@@ -189,7 +282,7 @@ Provide your output as concise, readable text with clear bullet points.`;
       model: result.model,
     });
   } catch (error: any) {
-    console.warn('Gemini deep insights error:', error?.message || error);
+    console.warn('AI deep insights error:', error?.message || error);
     return res.status(200).json({
       source: 'rule-engine-fallback',
       insights: null,

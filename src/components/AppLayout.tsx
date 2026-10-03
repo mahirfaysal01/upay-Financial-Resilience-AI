@@ -26,7 +26,7 @@ export const AppLayout: React.FC = () => {
 
   if (isHomePage) {
     return (
-      <div className={`min-h-screen bg-[var(--bg)] text-[var(--ink)] flex flex-col ${lang === 'bn' ? 'lang-bn' : 'lang-en'}`}>
+      <div key="home" className={`route-fade-slide min-h-screen bg-[var(--bg)] text-[var(--ink)] flex flex-col ${lang === 'bn' ? 'lang-bn' : 'lang-en'}`}>
         <HomePage />
         {/* Modals */}
         <ResponsibleAIModal />
@@ -41,7 +41,7 @@ export const AppLayout: React.FC = () => {
     <div className={`min-h-screen bg-[var(--bg-page)] text-[var(--text-main)] flex flex-col ${lang === 'bn' ? 'lang-bn' : 'lang-en'}`}>
       <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main key={location.pathname} className="route-fade-slide flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/spending" element={<SpendingIntelligence />} />

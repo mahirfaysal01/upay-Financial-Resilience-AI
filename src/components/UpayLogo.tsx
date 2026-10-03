@@ -14,6 +14,7 @@ export const UpayLogo: React.FC<UpayLogoProps> = ({
   alt = 'upay',
 }) => {
   const [srcIndex, setSrcIndex] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Fallback sources list: official URL -> local official copy -> local asset
   const logoSources = [
@@ -40,8 +41,11 @@ export const UpayLogo: React.FC<UpayLogoProps> = ({
         <img
           src={currentSrc}
           alt={alt}
+          onLoad={() => setIsLoaded(true)}
           onError={handleError}
-          className="h-full w-auto max-w-none object-cover object-left transform scale-110"
+          className={`h-full w-auto max-w-none object-cover object-left transform scale-110 transition-opacity duration-300 ${
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
         />
       </div>
     );
@@ -54,9 +58,12 @@ export const UpayLogo: React.FC<UpayLogoProps> = ({
         <img
           src={currentSrc}
           alt={alt}
+          onLoad={() => setIsLoaded(true)}
           onError={handleError}
           style={{ height: typeof height === 'number' ? `${height}px` : height }}
-          className="w-auto object-contain shrink-0 filter brightness-0 invert transition-opacity hover:opacity-95"
+          className={`w-auto object-contain shrink-0 filter brightness-0 invert transition-opacity duration-300 hover:opacity-95 ${
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
           loading="eager"
         />
       </div>
@@ -68,9 +75,12 @@ export const UpayLogo: React.FC<UpayLogoProps> = ({
     <img
       src={currentSrc}
       alt={alt}
+      onLoad={() => setIsLoaded(true)}
       onError={handleError}
       style={{ height: typeof height === 'number' ? `${height}px` : height }}
-      className={`w-auto object-contain shrink-0 transition-opacity hover:opacity-95 ${className}`}
+      className={`w-auto object-contain shrink-0 transition-opacity duration-300 hover:opacity-95 ${
+        isLoaded ? 'opacity-100' : 'opacity-0'
+      } ${className}`}
       loading="eager"
     />
   );

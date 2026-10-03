@@ -216,6 +216,36 @@
   animation: badgeGlow 3s ease-in-out infinite;
 }
 
+/* Route change transition: 250ms fade + 8px slide */
+@keyframes routeFadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.route-fade-slide {
+  animation: routeFadeSlide 250ms var(--ease-out) forwards;
+}
+
+/* IntersectionObserver Section Reveal Effect using --dur-slow */
+section.reveal-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+  will-change: opacity, transform;
+}
+
+section.reveal-section.fade-up,
+section.fade-up {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Button styles following spec: lift 2px and brighten on hover, press down with scale .98, arrow slides 4px right */
 .btn-primary {
   background-color: var(--yellow);

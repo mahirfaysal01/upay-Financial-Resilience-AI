@@ -250,6 +250,36 @@ export const HomePage: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
+  // IntersectionObserver-based reveal effect for all 'section' elements
+  useEffect(() => {
+    const sections = document.querySelectorAll('section');
+    sections.forEach((sec) => {
+      sec.classList.add('reveal-section');
+    });
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('fade-up');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px 0px -40px 0px',
+      }
+    );
+
+    sections.forEach((sec) => observer.observe(sec));
+
+    return () => {
+      sections.forEach((sec) => observer.unobserve(sec));
+      observer.disconnect();
+    };
+  }, []);
+
   // 3D Tilt calculation for feature cards on desktop
   const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (window.matchMedia('(hover: none)').matches) return;
@@ -398,7 +428,9 @@ export const HomePage: React.FC = () => {
       <main className="pt-24 sm:pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 sm:space-y-24">
         {/* 3. HERO (Navy, Rounded 32px with Interactive Personas & Floating Preview Card) */}
         <section
-          className="relative overflow-hidden rounded-[32px] bg-[var(--navy)] text-white p-7 sm:p-12 lg:p-16 shadow-[0_16px_40px_rgba(11,31,75,0.18)]"
+          className={`relative overflow-hidden rounded-[32px] bg-[var(--navy)] text-white p-7 sm:p-12 lg:p-16 shadow-[0_16px_40px_rgba(11,31,75,0.18)] transition-all duration-400 ease-out ${
+            isTransitioning ? 'scale-[0.97] opacity-60' : 'scale-100 opacity-100'
+          }`}
           aria-label="Hero Section"
         >
           {/* Decorative Circles drifting slowly (12-20s loop) */}
