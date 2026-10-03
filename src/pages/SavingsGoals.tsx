@@ -26,7 +26,7 @@ export const SavingsGoals: React.FC = () => {
     : null;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 route-fade-slide">
       {/* Header */}
       <div className="upay-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

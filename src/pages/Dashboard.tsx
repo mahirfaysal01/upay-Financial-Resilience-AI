@@ -45,6 +45,7 @@ import {
 import { useFinancial } from '../context/FinancialContext';
 import { useNotification } from '../context/NotificationContext';
 import { askAICoach, buildCoachContext, fetchGeminiDeepInsights } from '../services/aiCoachEngine';
+import { useFinancialVerdict } from '../services/aiService';
 import { toBengaliNumber } from '../utils/translations';
 import { exportMonthlyFinancialDataCSV } from '../utils/exportFinancialData';
 import { startSpeechListening, speakText, stopSpeaking, isSpeechRecognitionSupported } from '../utils/speechVoiceHelper';
@@ -81,6 +82,33 @@ export const Dashboard: React.FC = () => {
     Array<{ role: 'user' | 'assistant'; text: string; source?: string; model?: string }>
   >([]);
   const [isAskingAI, setIsAskingAI] = useState(false);
+
+  // Live AI Financial Verdict state via OpenRouter
+  const {
+    getVerdict,
+    verdict,
+    loading: isVerdictLoading,
+    resetVerdict,
+  } = useFinancialVerdict();
+
+  const handleRunAiVerdict = async () => {
+    try {
+      await getVerdict({
+        name: customer.name,
+        customerId: customer.customer_id,
+        currentBalance: profile.currentBalance,
+        monthlyIncome: profile.monthlyIncome,
+        monthlySpending: profile.averageMonthlySpending,
+        shortageRisk: risk.probability,
+        riskLevel: risk.riskLevel,
+        daysUntilDeficit: forecast.daysUntilCriticalBalance || profile.daysUntilNextIncome || 9,
+        upcomingBills: profile.upcomingExpenses,
+        anomalies: anomalies.map((a) => a.category),
+      });
+    } catch (e) {
+      console.error('AI Verdict execution error:', e);
+    }
+  };
 
   // Bangla Voice Input state
   const [isListening, setIsListening] = useState(false);
@@ -303,7 +331,7 @@ export const Dashboard: React.FC = () => {
   const strokeDashoffset = circumference - (riskPct / 100) * circumference;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 route-fade-slide">
       {/* 1) HERO BANNER WITH RISK GAUGE */}
       <section
         className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[var(--brand-primary)] via-[var(--brand-primary)] to-[var(--brand-primary-dark)] text-white p-6 sm:p-10 shadow-[0_8px_30px_rgba(0,28,68,0.12)] border border-[var(--brand-primary-dark)]"
@@ -341,14 +369,27 @@ export const Dashboard: React.FC = () => {
                 : 'upay AI analyzes your cash flows and scheduled obligations to forecast liquidity pressure before month-end.'}
             </p>
 
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <Link to="/simulator" className="btn-primary">
-                <Sliders className="w-4 h-4 text-[var(--brand-primary)]" />
+            <div className="pt-2 flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleRunAiVerdict}
+                disabled={isVerdictLoading}
+                className="btn-primary !bg-[var(--brand-accent)] hover:!shadow-[0_0_25px_rgba(255,194,14,0.6)] !text-[var(--brand-primary)] shine-effect cursor-pointer transition-all active:scale-98"
+                title={lang === 'bn' ? 'তাৎক্ষণিক এআই রায় জানুন' : 'Get Instant AI Verdict'}
+              >
+                <Sparkles className={`w-4 h-4 ${isVerdictLoading ? 'animate-spin' : 'animate-pulse'}`} />
+                <span>
+                  {isVerdictLoading
+                    ? (lang === 'bn' ? 'এআই মডেল বিশ্লেষণ করছে...' : 'Analyzing with OpenRouter AI...')
+                    : (lang === 'bn' ? '✨ এআই তাৎক্ষণিক রায় জানুন' : '✨ Instant AI Verdict')}
+                </span>
+              </button>
+              <Link to="/simulator" className="btn-secondary-white">
+                <Sliders className="w-4 h-4 text-white" />
                 <span>{lang === 'bn' ? 'সিমুলেশন শুরু করুন' : 'Launch Simulator'}</span>
               </Link>
               <Link to="/coach" className="btn-secondary-white">
                 <Bot className="w-4 h-4 text-white" />
-                <span>{lang === 'bn' ? 'এআই পরামর্শকের সাথে কথা বলুন' : 'Talk with AI Coach'}</span>
+                <span>{lang === 'bn' ? 'এআই পরামর্শক' : 'AI Coach'}</span>
               </Link>
               <button
                 onClick={() => setIsResilienceModalOpen(true)}
@@ -416,6 +457,211 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* 1.5) LIVE AI RESILIENCE VERDICT HUD (POWERED BY OPENROUTER & GEMINI) */}
+      <section
+        id="ai-verdict"
+        className="relative overflow-hidden rounded-[26px] transition-all duration-300 scroll-mt-24"
+        aria-label={lang === 'bn' ? 'লাইভ এআই আর্থিক রায়' : 'Live AI Financial Verdict'}
+      >
+        {isVerdictLoading ? (
+          /* SCANNING RADAR HUD STATE */
+          <div className="glass-panel-navy p-8 sm:p-10 text-white rounded-[26px] border border-amber-400/40 shadow-2xl relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
+              <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
+                <div className="absolute inset-0 rounded-full bg-amber-400/20 animate-radar-ripple"></div>
+                <div className="absolute inset-2 rounded-full border-2 border-dashed border-amber-300 animate-spin"></div>
+                <div className="w-12 h-12 rounded-full bg-amber-400 text-[var(--navy)] flex items-center justify-center font-black shadow-lg">
+                  <Bot className="w-6 h-6 animate-pulse" />
+                </div>
+              </div>
+              <div className="space-y-2 text-center sm:text-left flex-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                  <span>{lang === 'bn' ? 'ওপেনরাউটার এআই গাণিতিক বিশ্লেষণ চলছে' : 'OpenRouter AI Model Inquiring'}</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-heading font-extrabold text-white">
+                  {lang === 'bn'
+                    ? `${customer.name}-এর ওয়ালেটের সম্ভাব্য নগদ ঘাটতি গণনা করা হচ্ছে...`
+                    : `Calculating Liquidity Runout for ${customer.name}...`}
+                </h3>
+                <p className="text-white/75 text-sm max-w-xl">
+                  {lang === 'bn'
+                    ? 'আয়, ব্যয়ের অস্বাভাবিকতা, আসন্ন বিল ও পূর্ববর্তী ধারা বিশ্লেষণ করে নিউরাল মডেলে চূড়ান্ত রায় প্রস্তুত হচ্ছে।'
+                    : 'Correlating income frequency, anomaly variances, and utility bills using neural reasoning model.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : verdict ? (
+          /* ACTIVE VERDICT HUD STATE */
+          <div className="glass-panel-navy p-6 sm:p-8 text-white rounded-[26px] border border-amber-400/50 shadow-2xl relative overflow-hidden">
+            {/* Animated ambient background lights */}
+            <div className="absolute -top-16 -right-16 w-72 h-72 bg-amber-400/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-emerald-400/15 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="relative z-10 space-y-5">
+              {/* Header Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/15 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-400 text-[var(--navy)] flex items-center justify-center font-black shadow-lg">
+                    <Sparkles className="w-5 h-5 text-[var(--navy)]" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg sm:text-xl font-heading font-extrabold text-white">
+                        {lang === 'bn' ? 'এআই তাৎক্ষণিক রেজিলিয়েন্স রায়' : 'Instant AI Resilience Verdict'}
+                      </h3>
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/25 text-amber-300 border border-amber-400/40">
+                        {verdict.modelUsed || 'Gemini Flash'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/60">
+                      {lang === 'bn' ? `গ্রাহক: ${customer.name} · মূল্যায়ন সম্পন্ন: লাইভ` : `Customer: ${customer.name} · Evaluated: Live`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRunAiVerdict}
+                    className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold text-white transition-all cursor-pointer flex items-center gap-1.5"
+                    title={lang === 'bn' ? 'পুনরায় বিশ্লেষণ করুন' : 'Re-run analysis'}
+                  >
+                    <Bot className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{lang === 'bn' ? 'পুনরায় স্ক্যান' : 'Re-Scan'}</span>
+                  </button>
+                  <button
+                    onClick={resetVerdict}
+                    className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all cursor-pointer"
+                    title={lang === 'bn' ? 'লুকান' : 'Dismiss'}
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Verdict Banner & Risk Score Gauge */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                <div className="lg:col-span-8 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase ${
+                        verdict.riskLevel === 'HIGH'
+                          ? 'bg-rose-500/25 text-rose-300 border border-rose-400/40 glow-danger-neon'
+                          : verdict.riskLevel === 'MODERATE'
+                          ? 'bg-amber-400/25 text-amber-300 border border-amber-400/40 glow-yellow-neon'
+                          : 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 glow-success-neon'
+                      }`}
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>{verdict.riskLevel === 'HIGH' ? (lang === 'bn' ? 'উচ্চ ঝুঁকি' : 'High Risk') : verdict.riskLevel === 'MODERATE' ? (lang === 'bn' ? 'মাঝারি ঝুঁকি' : 'Moderate') : (lang === 'bn' ? 'স্থিতিশীল' : 'Stable')}</span>
+                    </span>
+                    <span className="text-xs text-white/70">
+                      {lang === 'bn' ? `ঘাটতি পর্যন্ত অবশিষ্ট: প্রায় ${toBengaliNumber(verdict.daysUntilDeficit || 9)} দিন` : `Days until deficit: ~${verdict.daysUntilDeficit || 9} days`}
+                    </span>
+                  </div>
+
+                  <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-white leading-tight">
+                    {verdict.verdictHeadline}
+                  </h2>
+
+                  <p className="text-sm sm:text-[15px] text-white/85 leading-relaxed bg-white/5 p-3.5 rounded-2xl border border-white/10">
+                    {verdict.verdictExplanation}
+                  </p>
+                </div>
+
+                {/* Score & Buffer Recommendation Widget */}
+                <div className="lg:col-span-4 bg-white/10 rounded-2xl p-4 border border-white/15 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white/70">{lang === 'bn' ? 'এআই ঝুঁকি সূচক' : 'AI Risk Metric'}</span>
+                    <span className="text-lg font-heading font-extrabold text-amber-300">{toBengaliNumber(verdict.riskScore)}%</span>
+                  </div>
+
+                  {/* Progress Bar with neon gradient */}
+                  <div className="w-full bg-white/20 h-2.5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        verdict.riskScore >= 70
+                          ? 'bg-gradient-to-r from-amber-400 to-rose-500'
+                          : verdict.riskScore >= 40
+                          ? 'bg-gradient-to-r from-emerald-400 to-amber-400'
+                          : 'bg-gradient-to-r from-emerald-400 to-teal-400'
+                      }`}
+                      style={{ width: `${verdict.riskScore}%` }}
+                    />
+                  </div>
+
+                  <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span className="text-white/70">{lang === 'bn' ? 'প্রস্তাবিত সেফটি বাফার:' : 'Recommended Buffer:'}</span>
+                    <span className="font-heading font-black text-amber-300 text-sm">
+                      {formatMoney(verdict.safetyBufferRecommendation || 2000)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommended Action Points */}
+              {verdict.recommendedActions && verdict.recommendedActions.length > 0 && (
+                <div className="space-y-2.5 pt-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5" />
+                    <span>{lang === 'bn' ? 'কার্যকর পদক্ষেপসমূহ (Action Items):' : 'Key Action Items:'}</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {verdict.recommendedActions.map((actionText, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white/8 hover:bg-white/12 border border-white/15 hover:border-amber-400/50 p-3.5 rounded-2xl transition-all duration-200 flex items-start gap-2.5 group"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold">
+                          {idx + 1}
+                        </div>
+                        <p className="text-xs text-white/90 leading-relaxed font-medium">
+                          {actionText}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* IDLE / INVITATION BANNER WITH SHIMMER */
+          <div className="bg-gradient-to-r from-[var(--navy)] via-[var(--navy-2)] to-[#0A1A3F] p-5 sm:p-6 rounded-[26px] border border-amber-400/30 shadow-lg text-white relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-300 text-[var(--navy)] flex items-center justify-center font-black shadow-md shrink-0">
+                <Sparkles className="w-6 h-6 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-heading font-extrabold text-base sm:text-lg text-white">
+                    {lang === 'bn' ? 'তাৎক্ষণিক এআই রেজিলিয়েন্স বিশ্লেষণ' : 'Instant AI Resilience Analysis'}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                    OpenRouter Active
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-white/75 max-w-xl">
+                  {lang === 'bn'
+                    ? 'আপনার আয়ের সাথে ব্যয়ের অনুপাত, চলতি মাসের অসঙ্গতি ও আসন্ন বিল যাচাই করে এআই রায় তৈরি করুন।'
+                    : 'Generate a proactive AI financial verdict on cash-flow runway, deficit risks, and safety buffers.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleRunAiVerdict}
+              className="btn-primary !bg-[var(--brand-accent)] hover:!shadow-[0_0_20px_rgba(255,194,14,0.6)] !text-[var(--brand-primary)] shine-effect cursor-pointer whitespace-nowrap self-stretch sm:self-auto"
+            >
+              <Bot className="w-4 h-4" />
+              <span>{lang === 'bn' ? 'এআই রায় জানুন' : 'Run Verdict'}</span>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* 2) ONE-TAP ACTIONABLE INTERVENTIONS (HACKATHON WINNER FEATURE) */}

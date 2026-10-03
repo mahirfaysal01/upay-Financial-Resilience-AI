@@ -7,31 +7,40 @@ import {
   Mic,
   MicOff,
   Volume2,
+  Sparkles,
+  Copy,
+  Check,
+  Zap,
 } from 'lucide-react';
 import { useFinancial } from '../context/FinancialContext';
+import { useNotification } from '../context/NotificationContext';
 import { buildCoachContext, askAICoach } from '../services/aiCoachEngine';
 import { startSpeechListening, speakText } from '../utils/speechVoiceHelper';
+import { CardSkeleton } from '../components/CardSkeleton';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   timestamp: string;
-  source?: 'gemini-3.8-flash' | 'gemini-3.1-flash-lite' | 'rule-engine-fallback' | string;
+  source?: string;
+  model?: string;
 }
 
 export const AICoach: React.FC = () => {
   const { customer, profile, risk, forecast, anomalies, lang, formatMoney } = useFinancial();
+  const { notifySuccess } = useNotification();
 
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [speechActiveObj, setSpeechActiveObj] = useState<{ stop: () => void } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const initialGreeting = lang === 'bn'
-    ? `আসসালামু আলাইকুম ${customer.name}! আমি উপায় এআই সহকারী। আজ আমি আপনাকে কীভাবে সহায়তা করতে পারি? আপনার ওয়ালেট ব্যালেন্স, বাজেট, সঞ্চয়, কিংবা যেকোনো আর্থিক প্রশ্ন আমাকে নির্দ্বিধায় জিজ্ঞাসা করতে পারেন।`
-    : `Hello ${customer.name}! I am your upay AI financial assistant. How can I help you today? You can ask me anything about your wallet balance, bills, savings goals, or general financial questions!`;
+    ? `আসসালামু আলাইকুম ${customer.name}! আমি উপায় এআই আর্থিক সহকারী। আপনার ওয়ালেট ব্যালেন্স, বাজেট শৃঙ্খলা, মাস শেষের নগদ ঘাটতি এড়ানো কিংবা সঞ্চয়ের পরিকল্পনা নিয়ে যেকোনো প্রশ্ন আমাকে জিজ্ঞাসা করতে পারেন।`
+    : `Hello ${customer.name}! I am your upay AI financial assistant. You can ask me anything about your cash flows, budgeting, avoiding liquidity shortfalls, or savings plans!`;
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -39,7 +48,7 @@ export const AICoach: React.FC = () => {
       role: 'assistant',
       text: initialGreeting,
       timestamp: 'এখনই',
-      source: 'gemini-3.8-flash',
+      source: 'google/gemini-2.5-flash',
     },
   ]);
 
@@ -50,7 +59,7 @@ export const AICoach: React.FC = () => {
         role: 'assistant',
         text: initialGreeting,
         timestamp: 'এখনই',
-        source: 'gemini-3.8-flash',
+        source: 'google/gemini-2.5-flash',
       },
     ]);
   }, [customer.customer_id, lang]);
@@ -58,6 +67,17 @@ export const AICoach: React.FC = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    notifySuccess(
+      lang === 'bn' ? 'পরামর্শ কপি করা হয়েছে' : 'Copied to Clipboard',
+      lang === 'bn' ? 'এআই পরামর্শ সফলভাবে ক্লিপবোর্ডে কপি হয়েছে।' : 'AI advice copied successfully.',
+      { duration: 2500 }
+    );
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const handleSend = async (textToSend?: string) => {
     const query = (textToSend || input).trim();
@@ -91,6 +111,7 @@ export const AICoach: React.FC = () => {
         text: response.text,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         source: response.source,
+        model: response.model,
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
@@ -152,29 +173,39 @@ export const AICoach: React.FC = () => {
       ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 route-fade-slide">
       {/* Header */}
-      <div className="upay-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] text-[12px] font-bold">
-            জেনারেটিভ এআই অনুবাদক স্তর
+      <div className="upay-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="flex items-center gap-4">
+          <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-[var(--navy)] via-[var(--navy-2)] to-amber-500 text-[var(--yellow)] flex items-center justify-center font-black shadow-lg shrink-0">
+            <div className="absolute inset-0 rounded-2xl bg-amber-400/20 animate-radar-ripple pointer-events-none"></div>
+            <Bot className="w-7 h-7 text-amber-300 relative z-10" />
           </div>
-          <h2 className="text-[var(--brand-primary)] mt-2">উপায় এআই আর্থিক পরামর্শক</h2>
-          <p className="text-caption text-[var(--muted)] max-w-2xl mt-0.5">
-            {lang === 'bn'
-              ? 'আপনার ক্যাশ-ফ্লো ও ঝুঁকির জটিল উপাত্তকে সহজ ও বাস্তবমুখী ভাষায় বুঝিয়ে দেয়।'
-              : 'Translates complex cash-flow and liquidity risks into clear, proactive guidance.'}
-          </p>
+
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] text-[11.5px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+              <span>{lang === 'bn' ? 'ওপেনরাউটার নিউরাল এআই ইঞ্জিন' : 'OpenRouter Neural Engine'}</span>
+            </div>
+            <h2 className="text-[var(--brand-primary)] text-xl font-heading font-extrabold mt-1">
+              {lang === 'bn' ? 'উপায় এআই আর্থিক পরামর্শক' : 'upay AI Financial Coach'}
+            </h2>
+            <p className="text-caption text-[var(--muted)] max-w-xl">
+              {lang === 'bn'
+                ? 'আপনার ক্যাশ-ফ্লো, ইউটিলিটি বিল ও ঘাটতির ঝুঁকি বিশ্লেষণ করে সহজ ও সাবলীল বাংলায় তাৎক্ষণিক দিকনির্দেশনা।'
+                : 'Translates complex cash-flow patterns and liquidity shortfalls into proactive Bengali & English coaching.'}
+            </p>
+          </div>
         </div>
 
         {/* Live Context Badge */}
-        <div className="px-4 py-2.5 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] text-caption flex items-center gap-4">
+        <div className="px-4 py-2.5 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] text-caption flex items-center gap-4 shrink-0 shadow-xs">
           <div>
-            <p className="text-[11px] text-[var(--muted)] font-semibold">ওয়ালেট ব্যালেন্স</p>
+            <p className="text-[11px] text-[var(--muted)] font-semibold">{lang === 'bn' ? 'ওয়ালেট ব্যালেন্স' : 'Wallet Balance'}</p>
             <p className="font-heading font-extrabold text-[var(--navy)] text-[15px]">{formatMoney(profile.currentBalance)}</p>
           </div>
           <div className="border-l border-[var(--line)] pl-4">
-            <p className="text-[11px] text-[var(--muted)] font-semibold">ঘাটতির ঝুঁকি</p>
+            <p className="text-[11px] text-[var(--muted)] font-semibold">{lang === 'bn' ? 'ঘাটতির ঝুঁকি' : 'Shortage Risk'}</p>
             <p className={`font-heading font-extrabold text-[15px] ${risk.riskLevel === 'HIGH' ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
               {Math.round(risk.probability * 100)}%
             </p>
@@ -249,33 +280,53 @@ export const AICoach: React.FC = () => {
                 )}
 
                 <div
-                  className={`max-w-[85%] sm:max-w-[75%] rounded-[18px] p-4 text-[14px] leading-relaxed space-y-1.5 ${
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-[20px] p-4 text-[14px] leading-relaxed space-y-2 transition-all ${
                     msg.role === 'user'
-                      ? 'bg-[var(--navy)] text-white font-medium rounded-tr-xs shadow-xs'
-                      : 'bg-[var(--bg)] text-[var(--ink)] border border-[var(--line)] rounded-tl-xs whitespace-pre-line'
+                      ? 'bg-[var(--navy)] text-white font-medium rounded-tr-xs shadow-md'
+                      : 'bg-white text-[var(--ink)] border border-[var(--line)] hover:border-amber-300/80 rounded-tl-xs shadow-xs whitespace-pre-line'
                   }`}
                 >
                   <p>{msg.text}</p>
                   <div
-                    className={`flex items-center justify-between gap-2 text-[10px] ${
-                      msg.role === 'user' ? 'text-slate-300' : 'text-[var(--muted)]'
+                    className={`flex items-center justify-between gap-2 text-[10.5px] pt-1 border-t ${
+                      msg.role === 'user' ? 'border-white/10 text-slate-300' : 'border-slate-100 text-[var(--muted)]'
                     }`}
                   >
-                    <span>{msg.timestamp}</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-semibold text-[var(--muted)]">
-                        {lang === 'bn' ? 'উপায় এআই' : 'upay AI'}
-                      </span>
+                      <span>{msg.timestamp}</span>
+                      {msg.source && msg.role === 'assistant' && (
+                        <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">
+                          {msg.model || 'Gemini 2.5 Flash'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
                       {msg.role === 'assistant' && (
-                        <button
-                          type="button"
-                          onClick={() => speakText(msg.text, lang)}
-                          className="p-1 rounded hover:bg-slate-200 text-[var(--brand-primary)] transition-colors cursor-pointer"
-                          title={lang === 'bn' ? 'ভয়েস শুনুন' : 'Read Aloud'}
-                          aria-label="Read message aloud"
-                        >
-                          <Volume2 className="w-3.5 h-3.5" />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(msg.text, msg.id)}
+                            className="p-1 rounded-md hover:bg-slate-100 text-[var(--muted)] hover:text-[var(--navy)] transition-colors cursor-pointer"
+                            title={lang === 'bn' ? 'কপি করুন' : 'Copy'}
+                            aria-label="Copy message"
+                          >
+                            {copiedId === msg.id ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => speakText(msg.text, lang)}
+                            className="p-1 rounded-md hover:bg-slate-100 text-[var(--brand-primary)] transition-colors cursor-pointer"
+                            title={lang === 'bn' ? 'ভয়েস শুনুন' : 'Read Aloud'}
+                            aria-label="Read message aloud"
+                          >
+                            <Volume2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -290,13 +341,24 @@ export const AICoach: React.FC = () => {
             ))}
 
             {loading && (
-              <div className="flex gap-3 items-center">
-                <div className="w-8 h-8 rounded-full bg-[var(--yellow-soft)] flex items-center justify-center text-[var(--navy)] shrink-0">
-                  <Bot className="w-4 h-4 animate-spin" />
+              <div className="flex gap-3 items-start w-full max-w-lg">
+                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 shadow-xs mt-1">
+                  <Bot className="w-4 h-4 animate-spin text-amber-600" />
                 </div>
-                <div className="p-3.5 rounded-[18px] bg-[var(--bg)] border border-[var(--line)] text-caption text-[var(--muted)] flex items-center gap-2 font-medium">
-                  <span className="inline-block w-2 h-2 rounded-full bg-[var(--yellow)] animate-pulse"></span>
-                  <span>{lang === 'bn' ? 'তথ্য বিশ্লেষণ করা হচ্ছে...' : 'Analyzing financial data...'}</span>
+                <div className="flex-1">
+                  <CardSkeleton
+                    variant="insight"
+                    className="!p-4.5 !rounded-[22px] !border-amber-200/80 !bg-white/95 shadow-xs"
+                    showAction={false}
+                  />
+                  <div className="flex items-center gap-2 mt-2 px-1 text-[11px] text-[var(--muted)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                    <span>
+                      {lang === 'bn'
+                        ? 'উপায় নিউরাল এআই আর্থিক ডেটা বিশ্লেষণ করছে...'
+                        : 'upay Neural AI is evaluating cash flows...'}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}

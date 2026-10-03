@@ -67,7 +67,7 @@ export const Navbar: React.FC = () => {
     : customer.name;
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[var(--bg-card)] border-b border-[var(--border)] shadow-[0_2px_8px_rgba(0,28,68,0.04)]">
+    <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-white/92 border-b border-[var(--border)] shadow-[0_4px_24px_rgba(11,31,75,0.06)] transition-all">
       {/* Upper Navigation Row */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18 gap-3">
@@ -75,7 +75,7 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <NavLink
               to="/"
-              className="flex items-center gap-2 group transition-transform hover:opacity-95"
+              className="flex items-center gap-2 group transition-all hover:scale-102 hover:opacity-95"
               title="upay Financial Resilience AI"
             >
               <UpayLogo height={38} alt="upay" />
@@ -84,12 +84,25 @@ export const Navbar: React.FC = () => {
 
           {/* Right: Persona Switcher, Lang Toggle, Bell */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Real-time Firebase Cloud Connection Indicator */}
+            {/* Quick AI Verdict Badge Link */}
+            <NavLink
+              to="/dashboard#ai-verdict"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-amber-400/20 to-amber-500/10 border border-amber-300/60 text-[var(--navy)] text-[12px] font-bold tracking-tight hover:shadow-[0_0_15px_rgba(255,194,14,0.4)] hover:border-amber-400 transition-all shine-effect cursor-pointer"
+              title={lang === 'bn' ? 'তাৎক্ষণিক এআই আর্থিক রায় জানুন' : 'Instant AI Financial Verdict'}
+            >
+              <Bot className="w-3.5 h-3.5 text-amber-600 animate-bounce" />
+              <span>{lang === 'bn' ? 'এআই রায়' : 'AI Verdict'}</span>
+            </NavLink>
+
+            {/* Real-time Firebase Cloud Connection Indicator with Ping Animation */}
             <div
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11.5px] font-semibold tracking-tight"
+              className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50/90 border border-emerald-200/80 text-emerald-800 text-[11.5px] font-semibold tracking-tight shadow-xs"
               title={lang === 'bn' ? `রিয়েল-টাইম ফায়ারবেস সংযুক্ত (${firebaseProjectId})` : `Firebase Connected (${firebaseProjectId})`}
             >
-              <span className={`w-2 h-2 rounded-full ${isFirebaseConnected ? 'bg-[var(--success)] animate-pulse' : 'bg-amber-500'}`}></span>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
               <span>{lang === 'bn' ? 'ফায়ারবেস লাইভ' : 'Firebase Live'}</span>
             </div>
 
@@ -97,13 +110,13 @@ export const Navbar: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setCustomerDropdownOpen(!customerDropdownOpen)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[14px] bg-[var(--bg-page)] border border-[var(--border)] hover:border-[var(--brand-primary)]/40 text-[var(--brand-primary)] text-[13px] font-semibold transition-all cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-[14px] bg-[var(--bg-page)]/80 hover:bg-[var(--bg-page)] border border-[var(--border)] hover:border-[var(--brand-accent)] text-[var(--brand-primary)] text-[13px] font-semibold transition-all cursor-pointer shadow-xs hover:shadow-sm"
                 title={lang === 'bn' ? 'গ্রাহক প্রোফাইল পরিবর্তন করুন' : 'Switch Customer Profile'}
                 aria-label={lang === 'bn' ? 'গ্রাহক প্রোফাইল পরিবর্তন' : 'Switch Customer Profile'}
               >
-                <span className="w-2 h-2 rounded-full bg-[var(--success)] shrink-0"></span>
+                <span className="w-2 h-2 rounded-full bg-[var(--success)] shrink-0 animate-pulse"></span>
                 <span className="max-w-[85px] sm:max-w-none truncate">{displayName}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-muted)] transition-transform duration-200 ${customerDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {customerDropdownOpen && (
@@ -210,7 +223,7 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Navigation Tabs (Scrollable on mobile down to 360px) */}
-      <div className="border-t border-[var(--border)] bg-[var(--bg-card)]">
+      <div className="border-t border-[var(--border)] bg-[var(--bg-card)]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center gap-1.5 py-2.5 overflow-x-auto no-scrollbar scroll-smooth">
             {navLinks.map((tab) => {
@@ -221,15 +234,15 @@ export const Navbar: React.FC = () => {
                 <NavLink
                   key={tab.to}
                   to={tab.to}
-                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[13.5px] font-semibold whitespace-nowrap transition-all shrink-0 cursor-pointer ${
+                  className={`relative inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[13.5px] font-semibold whitespace-nowrap transition-all duration-200 shrink-0 cursor-pointer ${
                     isActive
-                      ? 'bg-[var(--brand-primary)] text-white shadow-xs'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-md shadow-[var(--brand-primary)]/20 ring-1 ring-[var(--brand-accent)]/50'
                       : 'text-[var(--text-muted)] hover:text-[var(--brand-primary)] hover:bg-[var(--bg-page)]'
                   }`}
                 >
                   <Icon
-                    className={`w-3.5 h-3.5 ${
-                      isActive ? 'text-[var(--brand-accent)]' : 'text-[var(--text-muted)]'
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      isActive ? 'text-[var(--brand-accent)] scale-110' : 'text-[var(--text-muted)]'
                     }`}
                   />
                   <span>{tab.label}</span>
@@ -237,6 +250,9 @@ export const Navbar: React.FC = () => {
                     <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--danger)] text-white animate-pulse">
                       {tab.badge}
                     </span>
+                  )}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[var(--brand-accent)] rounded-full"></span>
                   )}
                 </NavLink>
               );

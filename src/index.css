@@ -87,6 +87,23 @@
   }
 }
 
+/* Route transition animation */
+@keyframes routeFadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.route-fade-slide {
+  animation: routeFadeSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
 /* 6-second soft yellow glow pulse */
 @keyframes fadeInUp {
   from {
@@ -214,6 +231,129 @@
 
 .border-glow {
   animation: badgeGlow 3s ease-in-out infinite;
+}
+
+/* Radar Pulse / Ripple Effect for Real-Time AI Scans */
+@keyframes radarRipple {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.animate-radar-ripple {
+  animation: radarRipple 2.4s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+}
+
+/* Diagonal Shine Sweep for Premium Cards & Buttons */
+@keyframes shineSweep {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  20%, 100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+.shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  pointer-events: none;
+  animation: shineSweep 4.5s ease-in-out infinite;
+}
+
+/* Ambient Aurora Gradient Shift */
+@keyframes auroraShift {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: translate(30px, -20px) scale(1.12);
+    filter: hue-rotate(15deg);
+  }
+}
+
+.animate-aurora {
+  animation: auroraShift 18s ease-in-out infinite;
+}
+
+/* Cybernetic Glowing Border Beam */
+@keyframes borderBeamRotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.border-beam-animated {
+  background: linear-gradient(90deg, #FFC20E, #0B1F4B, #1FA971, #FFC20E);
+  background-size: 300% 300%;
+  animation: borderBeamRotate 6s linear infinite;
+}
+
+/* Ultra-Cool Glassmorphic Cards */
+.glass-panel-navy {
+  background: linear-gradient(135deg, rgba(11, 31, 75, 0.95) 0%, rgba(18, 48, 111, 0.92) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 194, 14, 0.22);
+  box-shadow: 0 16px 40px -10px rgba(11, 31, 75, 0.35);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(228, 232, 242, 0.9);
+  box-shadow: 0 8px 30px -4px rgba(11, 31, 75, 0.05);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease;
+}
+
+.glass-card-light:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 194, 14, 0.6);
+  box-shadow: 0 16px 36px -6px rgba(11, 31, 75, 0.1);
+}
+
+/* Neon Risk Score Pill */
+.glow-danger-neon {
+  box-shadow: 0 0 20px rgba(229, 72, 77, 0.4), inset 0 0 10px rgba(229, 72, 77, 0.2);
+}
+
+.glow-yellow-neon {
+  box-shadow: 0 0 24px rgba(255, 194, 14, 0.5), inset 0 0 12px rgba(255, 194, 14, 0.25);
+}
+
+.glow-success-neon {
+  box-shadow: 0 0 20px rgba(31, 169, 113, 0.4), inset 0 0 10px rgba(31, 169, 113, 0.2);
 }
 
 /* Route change transition: 250ms fade + 8px slide */

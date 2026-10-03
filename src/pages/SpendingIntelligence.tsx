@@ -60,7 +60,7 @@ export const SpendingIntelligence: React.FC = () => {
   const topDriverName = categoryNamesBn[topDriver?.category] || topDriver?.category;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 route-fade-slide">
       {/* Page Title & Filter Row */}
       <div className="upay-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

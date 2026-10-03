@@ -25,6 +25,7 @@ import {
   HelpCircle,
   Activity,
   Award,
+  Clock,
 } from 'lucide-react';
 import { UpayLogo } from '../components/UpayLogo';
 import { toBengaliNumber } from '../utils/translations';
@@ -350,7 +351,7 @@ export const HomePage: React.FC = () => {
   ];
 
   return (
-    <div className="relative min-h-screen bg-[var(--bg)] text-[var(--ink)] overflow-x-hidden selection:bg-[var(--yellow)] selection:text-[var(--navy)]">
+    <div className="route-fade-slide relative min-h-screen bg-[var(--bg)] text-[var(--ink)] overflow-x-hidden selection:bg-[var(--yellow)] selection:text-[var(--navy)]">
       {/* 1. TOP YELLOW SCROLL PROGRESS BAR */}
       <div
         className="fixed top-0 left-0 h-[3.5px] bg-[var(--yellow)] z-[100] transition-all duration-75 shadow-xs"
@@ -426,38 +427,40 @@ export const HomePage: React.FC = () => {
       </header>
 
       <main className="pt-24 sm:pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 sm:space-y-24">
-        {/* 3. HERO (Navy, Rounded 32px with Interactive Personas & Floating Preview Card) */}
+        {/* 3. HERO (Open, Modern Canvas Layout - Blue card removed) */}
         <section
-          className={`relative overflow-hidden rounded-[32px] bg-[var(--navy)] text-white p-7 sm:p-12 lg:p-16 shadow-[0_16px_40px_rgba(11,31,75,0.18)] transition-all duration-400 ease-out ${
+          className={`relative pt-4 sm:pt-8 pb-4 sm:pb-8 transition-all duration-400 ease-out ${
             isTransitioning ? 'scale-[0.97] opacity-60' : 'scale-100 opacity-100'
           }`}
           aria-label="Hero Section"
         >
-          {/* Decorative Circles drifting slowly (12-20s loop) */}
+          {/* Subtle Ambient Glow and Tech Dot Pattern */}
           <div
-            className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[var(--navy-2)] opacity-85 drift-slow-1 pointer-events-none"
+            className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[340px] bg-gradient-to-tr from-amber-200/25 via-yellow-100/20 to-blue-100/20 blur-3xl rounded-full pointer-events-none -z-10"
             aria-hidden="true"
           />
           <div
-            className="absolute -bottom-16 left-1/4 w-36 h-36 rounded-full bg-[var(--yellow)] opacity-20 blur-xl drift-slow-2 pointer-events-none"
+            className="absolute -top-12 -left-12 w-64 h-64 bg-amber-100/30 rounded-full blur-2xl pointer-events-none -z-10"
             aria-hidden="true"
           />
 
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
             {/* Left Column: Word-by-Word Headline, Interactive Persona Selectors & Actions */}
             <div className="lg:col-span-7 space-y-5 sm:space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 text-white text-[12px] font-semibold border border-white/15 backdrop-blur-xs">
-                <span className="w-2 h-2 rounded-full bg-[var(--yellow)]" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50/90 text-[var(--navy)] text-[12px] font-bold border border-amber-200 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-[var(--yellow)] animate-pulse" />
                 <span>উপায় ডিজিটাল ফাইনান্সিয়াল রেজিলিয়েন্স</span>
               </div>
 
               {/* Headline revealed word-by-word with 60ms stagger */}
-              <h1 className="font-heading font-extrabold text-[36px] sm:text-[46px] lg:text-[54px] text-white leading-[1.18] tracking-tight">
+              <h1 className="font-heading font-extrabold text-[36px] sm:text-[46px] lg:text-[54px] text-[var(--navy)] leading-[1.18] tracking-tight">
                 {headlineWords.map((item, idx) => (
                   <span
                     key={idx}
                     className={`inline-block mr-2.5 transition-all duration-500 ${
-                      item.highlight ? 'text-[var(--yellow)]' : 'text-white'
+                      item.highlight
+                        ? 'text-amber-500 underline decoration-amber-300 decoration-wavy decoration-2 underline-offset-6'
+                        : 'text-[var(--navy)]'
                     }`}
                     style={{
                       animation: `fadeInUp 450ms ease-out ${idx * 60}ms backwards`,
@@ -468,14 +471,14 @@ export const HomePage: React.FC = () => {
                 ))}
               </h1>
 
-              <p className="text-white/85 text-[15.5px] sm:text-[17px] max-w-xl leading-relaxed">
+              <p className="text-slate-600 text-[16px] sm:text-[17.5px] max-w-xl leading-relaxed">
                 উপায় এআই আপনার ওয়ালেটের নগদ প্রবাহ ও খরচের গতি বিশ্লেষণ করে মাস শেষের সম্ভাব্য আর্থিক ঘাটতি সমস্যা হওয়ার আগেই পূর্বাভাস দেয়।
               </p>
 
-              {/* Interactive Live Persona Switcher */}
+              {/* Interactive Live Persona Switcher on Light Background */}
               <div className="space-y-2 pt-1">
-                <p className="text-[12.5px] text-[var(--yellow)] font-bold flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" />
+                <p className="text-[12.5px] text-slate-700 font-bold flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-amber-500" />
                   <span>লাইভ টেস্ট প্রোফাইল বেছে নিন (কার্ডের ডেটা রিয়েল-টাইমে বদলাবে):</span>
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
@@ -487,14 +490,14 @@ export const HomePage: React.FC = () => {
                         onClick={() => handleSelectPersona(p)}
                         className={`px-3 py-1.5 rounded-full text-[12.5px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                           isSelected
-                            ? 'bg-[var(--yellow)] text-[var(--navy)] shadow-xs scale-105 border-glow'
-                            : 'bg-white/10 text-white/90 hover:bg-white/20 border border-white/15'
+                            ? 'bg-[var(--navy)] text-[var(--yellow)] shadow-sm scale-102 ring-2 ring-[var(--yellow)]/60'
+                            : 'bg-white text-slate-700 hover:text-[var(--navy)] hover:bg-slate-50 border border-slate-200 shadow-2xs'
                         }`}
                         title={`${p.name} - ${p.role}`}
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[var(--yellow)]' : 'bg-slate-400'}`} />
                         <span>{p.name}</span>
-                        <span className="text-[10.5px] opacity-80 font-normal">({p.role})</span>
+                        <span className="text-[10.5px] opacity-75 font-normal">({p.role})</span>
                       </button>
                     );
                   })}
@@ -505,7 +508,7 @@ export const HomePage: React.FC = () => {
               <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
                 <button
                   onClick={handleLaunchDashboard}
-                  className="btn-primary yellow-glow-pulse text-[15px] !py-3.5 !px-7"
+                  className="btn-primary yellow-glow-pulse text-[15px] !py-3.5 !px-7 shadow-md"
                 >
                   <span>ড্যাশবোর্ড খুলুন</span>
                   <ArrowRight className="w-4.5 h-4.5 btn-arrow-icon" />
@@ -513,144 +516,180 @@ export const HomePage: React.FC = () => {
 
                 <a
                   href="#how-it-works"
-                  className="btn-secondary-white text-[15px] !py-3.5 !px-6 text-center"
+                  className="btn-secondary text-[15px] !py-3.5 !px-6 text-center shadow-2xs"
                 >
                   <span>কীভাবে কাজ করে</span>
                 </a>
               </div>
             </div>
 
-            {/* Right Column: Floating Preview Card with Parallax & Persona Morphing */}
+            {/* Right Column: Compact, Clean Smart-Pass Preview Card (Light & Concise) */}
             <div
               ref={previewCardRef}
               className="lg:col-span-5 flex justify-center lg:justify-end transition-transform duration-200 ease-out"
             >
-              <div className={`w-full max-w-sm rounded-[24px] bg-white text-[var(--ink)] p-6 shadow-[0_20px_45px_rgba(0,0,0,0.3)] border-2 border-white/20 space-y-4 transition-all duration-200 ${
-                personaFading ? 'opacity-40 scale-98' : 'opacity-100 scale-100'
-              }`}>
-                {/* Header in Preview Card */}
-                <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${
-                      selectedPersona.riskLevel === 'HIGH' ? 'bg-[var(--danger)]' : selectedPersona.riskLevel === 'MODERATE' ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`} />
-                    <span className="text-[12.5px] font-bold text-[var(--navy)]">
-                      {selectedPersona.name} · লাইভ অডিট
-                    </span>
+              <div
+                className={`w-full max-w-sm rounded-[22px] bg-white text-[var(--ink)] p-4.5 sm:p-5 shadow-[0_16px_40px_rgba(0,0,0,0.22)] border border-slate-100 space-y-3.5 transition-all duration-200 ${
+                  personaFading ? 'opacity-40 scale-98' : 'opacity-100 scale-100'
+                }`}
+              >
+                {/* Header: Compact User Info & Live Risk Badge */}
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-[var(--yellow)] text-[var(--navy)] font-heading font-black text-xs flex items-center justify-center shadow-xs">
+                      {selectedPersona.name[0]}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-heading font-bold text-[13.5px] text-[var(--navy)] leading-none">
+                          {selectedPersona.name}
+                        </h4>
+                        <span className="text-[10px] text-slate-500 font-medium">({selectedPersona.role})</span>
+                      </div>
+                      <p className="text-[10.5px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>লাইভ ক্যাশফ্লো স্ক্যান</span>
+                      </p>
+                    </div>
                   </div>
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                    selectedPersona.riskLevel === 'HIGH'
-                      ? 'bg-[var(--danger-soft)] text-[var(--danger)]'
+
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide border ${
+                      selectedPersona.riskLevel === 'HIGH'
+                        ? 'bg-red-50 text-red-600 border-red-200'
+                        : selectedPersona.riskLevel === 'MODERATE'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}
+                  >
+                    {selectedPersona.riskLevel === 'HIGH'
+                      ? '৮২% উচ্চ ঝুঁকি'
                       : selectedPersona.riskLevel === 'MODERATE'
-                      ? 'bg-amber-50 text-amber-800'
-                      : 'bg-emerald-50 text-emerald-800'
-                  }`}>
-                    {selectedPersona.riskLevel === 'HIGH' ? 'উচ্চ ঝুঁকি' : selectedPersona.riskLevel === 'MODERATE' ? 'মাঝারি' : 'সুরক্ষিত'}
+                      ? '৪৮% মাঝারি'
+                      : '২৪% সুরক্ষিত'}
                   </span>
                 </div>
 
-                {/* Circular Gauge (Count up 0 to Risk %) */}
-                <div className="flex items-center justify-center pt-1">
-                  <div className="relative w-36 h-36">
-                    <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
-                      {/* Background Track */}
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        fill="transparent"
-                        stroke="#E2E8F0"
-                        strokeWidth="8"
-                      />
-                      {/* Animated Danger Arc */}
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        fill="transparent"
-                        stroke={selectedPersona.riskLevel === 'HIGH' ? '#E5484D' : selectedPersona.riskLevel === 'MODERATE' ? '#FFC20E' : '#1FA971'}
-                        strokeWidth="8.5"
-                        strokeDasharray={2 * Math.PI * 40}
-                        strokeDashoffset={2 * Math.PI * 40 * (1 - gaugeValue / 100)}
-                        strokeLinecap="round"
-                        className="transition-all duration-300 ease-out"
-                      />
-                    </svg>
+                {/* Middle: Compact Split Layout (Gauge on Left + Stats & Sparkline on Right) */}
+                <div className="grid grid-cols-12 gap-3 items-center pt-0.5">
+                  {/* Left: Compact Radial Meter */}
+                  <div className="col-span-5 flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50/80 border border-slate-100">
+                    <div className="relative w-18 h-18 flex items-center justify-center">
+                      <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 70 70">
+                        <circle
+                          cx="35"
+                          cy="35"
+                          r="28"
+                          fill="transparent"
+                          stroke="#E2E8F0"
+                          strokeWidth="6"
+                        />
+                        <circle
+                          cx="35"
+                          cy="35"
+                          r="28"
+                          fill="transparent"
+                          stroke={
+                            selectedPersona.riskLevel === 'HIGH'
+                              ? '#E5484D'
+                              : selectedPersona.riskLevel === 'MODERATE'
+                              ? '#FFC20E'
+                              : '#1FA971'
+                          }
+                          strokeWidth="6.5"
+                          strokeDasharray={2 * Math.PI * 28}
+                          strokeDashoffset={2 * Math.PI * 28 * (1 - gaugeValue / 100)}
+                          strokeLinecap="round"
+                          className="transition-all duration-400 ease-out"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <span
+                          className={`font-heading font-extrabold text-[17px] leading-none ${
+                            selectedPersona.riskLevel === 'HIGH'
+                              ? 'text-[var(--danger)]'
+                              : selectedPersona.riskLevel === 'MODERATE'
+                              ? 'text-amber-600'
+                              : 'text-emerald-600'
+                          }`}
+                        >
+                          {toBengaliNumber(gaugeValue)}%
+                        </span>
+                        <span className="text-[8.5px] text-slate-400 font-bold uppercase mt-0.5">ঘাটতি</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-semibold mt-1">
+                      {selectedPersona.riskLevel === 'HIGH'
+                        ? '৯ দিনে ঘাটতি'
+                        : selectedPersona.riskLevel === 'MODERATE'
+                        ? '৫ দিনে ঘাটতি'
+                        : 'সুরক্ষিত'}
+                    </span>
+                  </div>
 
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                      <span className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider">
-                        ঘাটতির ঝুঁকি
-                      </span>
-                      <span className={`font-heading font-extrabold text-[32px] leading-none my-0.5 ${
-                        selectedPersona.riskLevel === 'HIGH' ? 'text-[var(--danger)]' : selectedPersona.riskLevel === 'MODERATE' ? 'text-amber-600' : 'text-emerald-600'
-                      }`}>
-                        {toBengaliNumber(gaugeValue)}%
-                      </span>
-                      <span className="text-[10.5px] text-[var(--muted)] font-semibold">
-                        অক্টোবর ২০২৬
-                      </span>
+                  {/* Right: Key Numbers & Sparkline */}
+                  <div className="col-span-7 space-y-2">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-100 text-center">
+                        <p className="text-[9.5px] text-slate-500 font-medium">নিশ্চিত আয়</p>
+                        <p className="font-heading font-extrabold text-[12px] text-[var(--navy)]">
+                          {selectedPersona.monthlyIncome}
+                        </p>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-100 text-center">
+                        <p className="text-[9.5px] text-slate-500 font-medium">আসন্ন বিল</p>
+                        <p className="font-heading font-extrabold text-[12px] text-[var(--danger)]">
+                          {selectedPersona.upcomingBill}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Micro Sparkline */}
+                    <div className="px-2 py-1 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between">
+                      <span className="text-[9.5px] text-slate-500">১৪ দিনের ট্রেন্ড:</span>
+                      <svg className="w-20 h-4" viewBox="0 0 60 16" fill="none">
+                        <path
+                          d={
+                            selectedPersona.riskLevel === 'LOW'
+                              ? 'M0 13 Q15 11 30 8 T60 3'
+                              : 'M0 3 Q15 5 30 9 T60 14'
+                          }
+                          stroke={selectedPersona.riskLevel === 'LOW' ? '#1FA971' : '#E5484D'}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                      </svg>
                     </div>
                   </div>
                 </div>
 
-                {/* AI Verdict Line */}
-                <div className={`p-3 rounded-[14px] border text-[12px] font-medium leading-relaxed flex items-start gap-2 ${
-                  selectedPersona.riskLevel === 'HIGH'
-                    ? 'bg-[var(--danger-soft)]/70 border-[var(--danger)]/25 text-[var(--danger)]'
-                    : selectedPersona.riskLevel === 'MODERATE'
-                    ? 'bg-amber-50 border-amber-200 text-amber-900'
-                    : 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                }`}>
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                  <span>{selectedPersona.verdict}</span>
+                {/* AI Warning Line (Compact 1-liner) */}
+                <div
+                  className={`px-3 py-2 rounded-xl text-[11.5px] font-medium leading-snug flex items-center gap-2 border ${
+                    selectedPersona.riskLevel === 'HIGH'
+                      ? 'bg-rose-50/80 border-rose-200 text-rose-800'
+                      : selectedPersona.riskLevel === 'MODERATE'
+                      ? 'bg-amber-50/80 border-amber-200 text-amber-800'
+                      : 'bg-emerald-50/80 border-emerald-200 text-emerald-800'
+                  }`}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-current" />
+                  <p className="line-clamp-2">{selectedPersona.verdict}</p>
                 </div>
 
-                {/* Trend line SVG drawing itself */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] text-[var(--muted)] font-medium">
-                    <span>১৪ দিনের গতিপথ</span>
-                    <span>পূর্বাভাস</span>
-                  </div>
-                  <div className="h-10 w-full overflow-hidden flex items-end">
-                    <svg className="w-full h-8" viewBox="0 0 100 30" fill="none">
-                      <path
-                        d={
-                          selectedPersona.riskLevel === 'LOW'
-                            ? 'M0 25 Q25 22 50 16 T100 8'
-                            : 'M0 8 Q25 10 50 18 T100 28'
-                        }
-                        stroke={selectedPersona.riskLevel === 'LOW' ? '#1FA971' : '#FFC20E'}
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        style={{
-                          strokeDasharray: 120,
-                          strokeDashoffset: 120 * (1 - lineProgress),
-                          transition: 'stroke-dashoffset 800ms ease-out, d 600ms ease-out',
-                        }}
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Two Mini Stats */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--line)]">
-                  <div className="p-2 rounded-[10px] bg-[var(--bg)] text-center">
-                    <p className="text-[10.5px] text-[var(--muted)]">মাসিক নিশ্চিত আয়</p>
-                    <p className="font-heading font-extrabold text-[13.5px] text-[var(--navy)]">
-                      {selectedPersona.monthlyIncome}
-                    </p>
-                  </div>
-                  <div className="p-2 rounded-[10px] bg-[var(--bg)] text-center">
-                    <p className="text-[10.5px] text-[var(--muted)]">আসন্ন বিল</p>
-                    <p className="font-heading font-extrabold text-[13.5px] text-[var(--danger)]">
-                      {selectedPersona.upcomingBill}
-                    </p>
-                  </div>
-                </div>
+                {/* Compact One-Tap Action Button */}
+                <button
+                  onClick={handleLaunchDashboard}
+                  className="w-full py-2 px-3 rounded-xl bg-[var(--yellow)] hover:bg-amber-400 text-[var(--navy)] font-heading font-extrabold text-[12px] flex items-center justify-center gap-1.5 shadow-xs hover:shadow-sm transition-all cursor-pointer"
+                >
+                  <Zap className="w-3 h-3 fill-current" />
+                  <span>উপায় বাফার লক সক্রিয় করুন</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
               </div>
             </div>
-          </div>
-        </section>
+        </div>
+      </section>
 
         {/* 4. REAL-TIME RESILIENCE PULSE TICKER (Infinite Smooth Marquee) */}
         <div className="overflow-hidden rounded-[16px] bg-[var(--navy)] text-white py-3 border border-[var(--navy-2)] shadow-xs relative">

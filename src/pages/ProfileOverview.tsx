@@ -58,7 +58,7 @@ export const ProfileOverview: React.FC = () => {
   const displayLocation = customerNamesBn[customer.customer_id]?.location || customer.location;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 route-fade-slide">
       {/* Header Profile Card */}
       <div className="upay-card p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
