@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Bell,
   X,
@@ -12,7 +13,7 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react';
-import { useNotification, ToastNotification, NotificationType } from '../context/NotificationContext';
+import { useNotification, NotificationType } from '../context/NotificationContext';
 import { useFinancial } from '../context/FinancialContext';
 
 interface NotificationCenterModalProps {
@@ -37,6 +38,18 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
   const { lang, formatMoney } = useFinancial();
   const [activeTab, setActiveTab] = useState<'all' | 'financial' | 'system'>('all');
 
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const filteredHistory = history.filter((item) => {
@@ -48,7 +61,7 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
   const getIcon = (type: NotificationType) => {
     switch (type) {
       case 'financial_alert':
-        return <TrendingUp className="w-4 h-4 text-[var(--navy)]" />;
+        return <TrendingUp className="w-4 h-4 text-[var(--brand-primary)]" />;
       case 'success':
         return <CheckCircle2 className="w-4 h-4 text-emerald-600" />;
       case 'error':
@@ -64,7 +77,7 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
   const getBadgeStyle = (type: NotificationType) => {
     switch (type) {
       case 'financial_alert':
-        return 'bg-[var(--navy)]/10 text-[var(--navy)] border-[var(--navy)]/20';
+        return 'bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] border-[var(--brand-primary)]/20';
       case 'success':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'error':
@@ -94,7 +107,6 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
     });
   };
 
-  // Helper test triggers for reviewer testing
   const triggerSampleAlert = (sample: 'risk' | 'goal' | 'error' | 'warning') => {
     if (sample === 'risk') {
       notifyFinancial(
@@ -135,23 +147,31 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
     }
   };
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="notification-center-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
-      <div className="relative w-full max-w-lg bg-[var(--card)] border border-[var(--line)] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div
+        className="relative w-full max-w-lg bg-white border border-[var(--border)] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="p-5 border-b border-[var(--line)] bg-[var(--bg)]/70 flex items-center justify-between">
+        <div className="p-5 border-b border-[var(--border)] bg-slate-50/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[14px] bg-[var(--navy)] text-[var(--yellow)] flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-[14px] bg-[var(--brand-primary)] text-[var(--brand-accent)] flex items-center justify-center shadow-xs">
               <Bell className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 id="notification-center-title" className="text-base font-bold text-[var(--navy)]">
+                <h3 id="notification-center-title" className="text-base font-heading font-bold text-[var(--brand-primary)]">
                   {lang === 'bn' ? 'আর্থিক বিজ্ঞপ্তি কেন্দ্র' : 'Financial Notification Center'}
                 </h3>
                 {unreadCount > 0 && (
@@ -160,7 +180,7 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[var(--muted)]">
+              <p className="text-xs text-[var(--text-muted)]">
                 {lang === 'bn'
                   ? 'রিয়েল-টাইম ক্যাশ-ফ্লো সতর্কতা ও সিস্টেম আপডেট'
                   : 'Real-time cash flow alerts & system updates'}
@@ -171,45 +191,45 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-[var(--line)]/50 text-[var(--muted)] hover:text-[var(--navy)] transition-colors cursor-pointer"
+            className="p-2 rounded-full hover:bg-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
             aria-label={lang === 'bn' ? 'বন্ধ করুন' : 'Close'}
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Quick Test Toolbar */}
-        <div className="px-5 py-2.5 bg-[var(--yellow-soft)]/40 border-b border-[var(--line)] flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-1.5 font-bold text-[var(--navy)]">
-            <Sparkles className="w-3.5 h-3.5 text-[var(--navy)]" />
+        <div className="px-5 py-2.5 bg-amber-50/60 border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-1.5 font-bold text-[var(--brand-primary)]">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--brand-primary)]" />
             <span>{lang === 'bn' ? 'টেস্ট টোস্ট পাঠান:' : 'Trigger Test Toast:'}</span>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
               type="button"
               onClick={() => triggerSampleAlert('risk')}
-              className="px-2 py-1 rounded-lg bg-[var(--navy)] text-[var(--yellow)] hover:bg-[var(--navy-2)] font-semibold transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-[var(--brand-primary)] text-[var(--brand-accent)] hover:opacity-90 font-semibold transition-opacity cursor-pointer shadow-xs text-xs"
             >
               {lang === 'bn' ? 'ঝুঁকি' : 'Risk'}
             </button>
             <button
               type="button"
               onClick={() => triggerSampleAlert('goal')}
-              className="px-2 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold transition-colors cursor-pointer shadow-xs text-xs"
             >
               {lang === 'bn' ? 'সফল' : 'Success'}
             </button>
             <button
               type="button"
               onClick={() => triggerSampleAlert('warning')}
-              className="px-2 py-1 rounded-lg bg-amber-500 text-white hover:bg-amber-600 font-semibold transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-amber-500 text-white hover:bg-amber-600 font-semibold transition-colors cursor-pointer shadow-xs text-xs"
             >
               {lang === 'bn' ? 'সতর্কতা' : 'Warning'}
             </button>
             <button
               type="button"
               onClick={() => triggerSampleAlert('error')}
-              className="px-2 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold transition-colors cursor-pointer shadow-xs text-xs"
             >
               {lang === 'bn' ? 'ত্রুটি' : 'Error'}
             </button>
@@ -217,15 +237,15 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
         </div>
 
         {/* Filter Tabs & Bulk Actions */}
-        <div className="px-5 py-2 border-b border-[var(--line)] flex items-center justify-between gap-2">
+        <div className="px-5 py-2.5 border-b border-[var(--border)] bg-white flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setActiveTab('all')}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
                 activeTab === 'all'
-                  ? 'bg-[var(--navy)] text-white'
-                  : 'text-[var(--muted)] hover:bg-[var(--bg)]'
+                  ? 'bg-[var(--brand-primary)] text-white shadow-2xs'
+                  : 'text-[var(--text-muted)] hover:bg-[var(--bg-page)]'
               }`}
             >
               {lang === 'bn' ? 'সকল' : 'All'}
@@ -235,8 +255,8 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
               onClick={() => setActiveTab('financial')}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
                 activeTab === 'financial'
-                  ? 'bg-[var(--navy)] text-white'
-                  : 'text-[var(--muted)] hover:bg-[var(--bg)]'
+                  ? 'bg-[var(--brand-primary)] text-white shadow-2xs'
+                  : 'text-[var(--text-muted)] hover:bg-[var(--bg-page)]'
               }`}
             >
               {lang === 'bn' ? 'আর্থিক সতর্কতা' : 'Financial'}
@@ -246,8 +266,8 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
               onClick={() => setActiveTab('system')}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
                 activeTab === 'system'
-                  ? 'bg-[var(--navy)] text-white'
-                  : 'text-[var(--muted)] hover:bg-[var(--bg)]'
+                  ? 'bg-[var(--brand-primary)] text-white shadow-2xs'
+                  : 'text-[var(--text-muted)] hover:bg-[var(--bg-page)]'
               }`}
             >
               {lang === 'bn' ? 'সিস্টেম ও ক্লাউড' : 'System & Cloud'}
@@ -259,7 +279,7 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
               <button
                 type="button"
                 onClick={markAllAsRead}
-                className="p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--navy)] hover:bg-[var(--bg)] transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--brand-primary)] hover:bg-[var(--bg-page)] transition-colors cursor-pointer"
                 title={lang === 'bn' ? 'সব পঠিত হিসেবে চিহ্নিত করুন' : 'Mark all as read'}
               >
                 <CheckCheck className="w-4 h-4" />
@@ -269,7 +289,7 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
               <button
                 type="button"
                 onClick={clearHistory}
-                className="p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-red-50 transition-colors cursor-pointer"
                 title={lang === 'bn' ? 'সকল নোটিফিকেশন মুছুন' : 'Clear notification history'}
               >
                 <Trash2 className="w-4 h-4" />
@@ -279,16 +299,16 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
         </div>
 
         {/* Notification List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2.5 divide-y divide-[var(--line)]/50">
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-white">
           {filteredHistory.length === 0 ? (
             <div className="py-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-[var(--bg)] flex items-center justify-center mx-auto mb-3 text-[var(--muted)]">
+              <div className="w-12 h-12 rounded-full bg-[var(--bg-page)] flex items-center justify-center mx-auto mb-3 text-[var(--text-muted)]">
                 <Bell className="w-6 h-6 opacity-40" />
               </div>
-              <p className="text-sm font-bold text-[var(--navy)]">
+              <p className="text-sm font-bold text-[var(--brand-primary)]">
                 {lang === 'bn' ? 'কোনো নোটিফিকেশন নেই' : 'No notifications'}
               </p>
-              <p className="text-xs text-[var(--muted)] mt-1 max-w-xs mx-auto">
+              <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xs mx-auto">
                 {lang === 'bn'
                   ? 'আর্থিক বিশ্লেষণ বা সিস্টেম ইভেন্ট ঘটলে আপনি এখানে তাৎক্ষণিক নোটিফিকেশন দেখতে পাবেন।'
                   : 'New cash flow alerts and system milestones will appear here.'}
@@ -298,12 +318,14 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
             filteredHistory.map((item) => (
               <div
                 key={item.id}
-                className={`pt-2.5 first:pt-0 flex items-start gap-3 transition-colors rounded-xl p-2 ${
-                  !item.read ? 'bg-[var(--bg)]/60' : ''
-                }`}
+                className={`p-3 rounded-xl border transition-all ${
+                  !item.read
+                    ? 'bg-amber-50/40 border-amber-200/80 shadow-2xs'
+                    : 'bg-white border-[var(--border)] hover:bg-slate-50'
+                } flex items-start gap-3`}
               >
                 <div
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 ${getBadgeStyle(
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 ${getBadgeStyle(
                     item.type
                   )}`}
                 >
@@ -312,28 +334,28 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-[13px] font-bold text-[var(--navy)] truncate">
+                    <h4 className="text-[13.5px] font-bold text-[var(--brand-primary)] truncate">
                       {item.title}
                     </h4>
-                    <span className="text-[11px] text-[var(--muted)] shrink-0 flex items-center gap-1">
+                    <span className="text-[11px] text-[var(--text-muted)] shrink-0 flex items-center gap-1 font-medium">
                       <Clock className="w-3 h-3" />
                       {formatTimestamp(item.timestamp)}
                     </span>
                   </div>
 
-                  <p className="text-xs text-[var(--muted)] mt-0.5 leading-relaxed">
+                  <p className="text-xs text-[var(--text-main)] mt-1 leading-relaxed">
                     {item.message}
                   </p>
 
                   {item.financialDetails && (
-                    <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+                    <div className="mt-2 flex items-center gap-2 text-[11px]">
                       {item.financialDetails.amount !== undefined && (
-                        <span className="font-bold text-[var(--navy)] bg-white px-2 py-0.5 rounded border border-[var(--line)]">
+                        <span className="font-bold text-[var(--brand-primary)] bg-white px-2 py-0.5 rounded border border-[var(--border)] shadow-2xs">
                           {formatMoney(item.financialDetails.amount)}
                         </span>
                       )}
                       {item.financialDetails.category && (
-                        <span className="text-[var(--muted)]">
+                        <span className="text-[var(--text-muted)] bg-slate-100 px-2 py-0.5 rounded">
                           {item.financialDetails.category}
                         </span>
                       )}
@@ -346,8 +368,8 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-[var(--line)] bg-[var(--bg)]/40 flex items-center justify-between text-xs text-[var(--muted)]">
-          <span>
+        <div className="p-3.5 border-t border-[var(--border)] bg-slate-50 flex items-center justify-between text-xs text-[var(--text-muted)]">
+          <span className="font-medium">
             {lang === 'bn'
               ? 'ইউনিক আর্থিক স্বচ্ছতা ও নোটিফিকেশন ইঞ্জিন'
               : 'Financial Resilience Notification Engine'}
@@ -355,7 +377,7 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1 rounded-[10px] bg-[var(--navy)] text-white font-bold hover:bg-[var(--navy-2)] transition-colors cursor-pointer"
+            className="px-4 py-1.5 rounded-[12px] bg-[var(--brand-primary)] text-white font-bold hover:bg-[var(--brand-primary-dark)] transition-colors cursor-pointer shadow-xs"
           >
             {lang === 'bn' ? 'ঠিক আছে' : 'Done'}
           </button>
@@ -363,4 +385,8 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalContent, document.body)
+    : modalContent;
 };

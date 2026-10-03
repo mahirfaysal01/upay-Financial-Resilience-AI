@@ -159,7 +159,7 @@ export function generateDeterministicCoachReply(query: string, ctx: AICoachConte
         ? `আপনার চলতি মাসের আর্থিক ঝুঁকি ৮২% (উচ্চ ঝুঁকি)।
 প্রধান কারণসমূহ:
 ১. ${topAnomaly ? `${topAnomaly.category} খাতে খরচ স্বাভাবিকের চেয়ে ${topAnomaly.pctChange}% বৃদ্ধি পেয়েছে।` : 'সাম্প্রতিক অতিরিক্ত খরচ।'}
-২. ক্যাশ-আউটের পরিমাণ বৃদ্ধি পাওয়ায় ওয়ালেটের তরল অর্থ দ্রুত কমেছে।
+২. ক্যাশ-আউটের পরিমাণ বৃদ্ধি পাওয়ায় ওয়ালেটের ব্যবহারযোগ্য নগদ টাকা দ্রুত কমেছে।
 ৩. ${billNotice}
 ৪. পরবর্তী আয়ের আগে আর ${ctx.daysUntilNextIncome} দিন বাকি, যেখানে বর্তমান ব্যালেন্স ৳${ctx.currentBalance.toLocaleString()}।
 ৫. এখনই খরচ নিয়ন্ত্রণ না করলে মাস শেষে আপনার ব্যালেন্স ৳${ctx.projectedMonthEndBalance.toLocaleString()} এ নেমে আসতে পারে।`

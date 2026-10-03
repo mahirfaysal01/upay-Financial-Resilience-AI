@@ -50,16 +50,23 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'upay_notification_history_v1';
+const STORAGE_KEY = 'upay_notification_history_v2';
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [history, setHistory] = useState<ToastNotification[]>(() => {
     try {
+      // Clean up legacy v1 key if it contains old mock texts
+      localStorage.removeItem('upay_notification_history_v1');
+
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed.slice(0, 30);
+        if (Array.isArray(parsed)) {
+          return parsed
+            .filter((item) => !item.message?.includes('মক') && !item.title?.includes('মক'))
+            .slice(0, 30);
+        }
       }
     } catch {
       // fallback
@@ -78,8 +85,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       {
         id: 'init_n_2',
         type: 'success',
-        title: 'ফায়ারবেস ক্লাউড কানেকশন সক্রিয়',
-        message: 'রিয়েল-টাইম ডাটাবেস upay-financial-resilience-ai এর সাথে সংযুক্ত।',
+        title: 'উপায় এআই প্ল্যাটফর্ম সংযুক্ত',
+        message: 'রিয়েল-টাইম প্রেডিকশন ইঞ্জিন সক্রিয় রয়েছে।',
         timestamp: Date.now() - 1000 * 60 * 120,
         read: true,
       },

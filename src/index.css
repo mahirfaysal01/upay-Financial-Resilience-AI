@@ -23,6 +23,7 @@
     --brand-accent-soft: var(--yellow-soft);
     --bg-page: var(--bg);
     --bg-card: #FFFFFF;
+    --card: #FFFFFF;
     --text-main: var(--ink);
     --text-muted: var(--muted);
     --border: var(--line);

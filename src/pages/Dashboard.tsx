@@ -914,7 +914,7 @@ export const Dashboard: React.FC = () => {
               </p>
             </div>
             <p className="text-caption text-[var(--text-muted)]">
-              {lang === 'bn' ? 'বর্তমান তরল তহবিল' : 'Current liquid balance'}
+              {lang === 'bn' ? 'ব্যবহারযোগ্য ব্যালেন্স' : 'Available balance'}
             </p>
           </div>
 

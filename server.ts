@@ -290,6 +290,63 @@ Provide your output as concise, readable text with clear bullet points.`;
   }
 });
 
+// 4. Server-side AI Structured Verdict endpoint
+app.post('/api/ai/verdict', async (req, res) => {
+  try {
+    const { data, lang = 'bn' } = req.body;
+
+    if (!openRouterApiKey && !ai) {
+      return res.status(200).json({
+        source: 'rule-engine-fallback',
+        verdict: null,
+      });
+    }
+
+    const systemInstruction = `You are the lead AI Financial Risk & Resilience Engine for "upay" (UCB Fintech).
+Analyze the provided user financial data and output ONLY a valid, minified JSON object with this exact schema:
+{
+  "riskScore": number (0 to 100),
+  "riskLevel": "HIGH" | "MODERATE" | "LOW",
+  "verdictHeadline": string in natural Bengali (বাংলা),
+  "verdictExplanation": string in natural Bengali explaining cash flow and deficit timing,
+  "recommendedActions": string[] (array of 2 to 3 actionable steps in Bengali),
+  "safetyBufferRecommendation": number (amount in BDT recommended to lock),
+  "daysUntilDeficit": number (estimated days before liquid balance drops below safe threshold),
+  "confidenceScore": number (80 to 99)
+}
+CRITICAL: Output pure JSON only. Do not add markdown backticks, explanations, or commentary outside the JSON.`;
+
+    const userPrompt = `Evaluate this upay customer financial profile:\n${JSON.stringify(data || {}, null, 2)}`;
+    const result = await generateAIContent(userPrompt, systemInstruction);
+
+    let parsed: any = null;
+    try {
+      let cleaned = result.text.trim();
+      if (cleaned.startsWith('```json')) {
+        cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      parsed = JSON.parse(cleaned);
+      parsed.modelUsed = result.model;
+    } catch {
+      parsed = null;
+    }
+
+    return res.status(200).json({
+      source: result.model,
+      verdict: parsed,
+      model: result.model,
+    });
+  } catch (error: any) {
+    console.warn('AI verdict endpoint error:', error?.message || error);
+    return res.status(200).json({
+      source: 'rule-engine-fallback',
+      verdict: null,
+    });
+  }
+});
+
 // Vite Middleware & Static Serving
 async function startServer() {
   const isProduction = process.env.NODE_ENV === 'production';
