@@ -8,6 +8,8 @@ import {
   SpendingAnomaly,
   Recommendation,
   SavingsGoal,
+  UtsobShieldProfile,
+  QurbaniSharePlan,
 } from '../types/financial';
 import { SYNTHETIC_CUSTOMERS } from '../data/syntheticData';
 import {
@@ -19,6 +21,10 @@ import { calculateShortageRisk } from '../services/shortageRiskEngine';
 import { detectSpendingAnomalies } from '../services/anomalyDetectionEngine';
 import { generateRecommendations } from '../services/recommendationEngine';
 import { getCustomerSavingsGoals } from '../services/savingsPlannerEngine';
+import {
+  getCustomerUtsobProfile,
+  getDefaultQurbaniPlan,
+} from '../services/utsobShieldEngine';
 import { Language, translations, formatCurrency } from '../utils/translations';
 import {
   subscribeToFirebaseGoals,
@@ -63,6 +69,17 @@ interface FinancialContextType {
   toggleEmergencyBuffer: () => void;
   isMerchantQrOptimized: boolean;
   toggleMerchantQrOptimized: () => void;
+
+  // Utsob Shield (Eid & Festival Shock Absorber)
+  isUtsobShieldActive: boolean;
+  toggleUtsobShield: () => void;
+  utsobSavedAmount: number;
+  withdrawUtsobPocket: () => void;
+  selectedFestivalId: string;
+  setSelectedFestivalId: (id: string) => void;
+  utsobProfile: UtsobShieldProfile;
+  qurbaniPlan: QurbaniSharePlan;
+  updateQurbaniPlan: (plan: Partial<QurbaniSharePlan>) => void;
 }
 
 const FinancialContext = createContext<FinancialContextType | undefined>(undefined);
@@ -89,10 +106,29 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isEmergencyBufferActive, setIsEmergencyBufferActive] = useState(false);
   const [isMerchantQrOptimized, setIsMerchantQrOptimized] = useState(false);
 
+  // Utsob Shield State (Eid & Festival Shock Absorber)
+  const [isUtsobShieldActive, setIsUtsobShieldActive] = useState(false);
+  const [utsobSavedAmount, setUtsobSavedAmount] = useState(3780);
+  const [selectedFestivalId, setSelectedFestivalId] = useState('eid-ul-fitr-2027');
+  const [qurbaniPlan, setQurbaniPlan] = useState<QurbaniSharePlan>(() => getDefaultQurbaniPlan());
+
   const [customGoals, setCustomGoals] = useState<Record<string, SavingsGoal[]>>({});
   const [firebaseLiveGoals, setFirebaseLiveGoals] = useState<Record<string, SavingsGoal[]>>({});
   const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(false);
   const firebaseProjectId = "upay-financial-resilience-ai";
+
+  const toggleUtsobShield = () => {
+    setIsUtsobShieldActive((prev) => !prev);
+  };
+
+  const withdrawUtsobPocket = () => {
+    setUtsobSavedAmount(0);
+    setIsUtsobShieldActive(false);
+  };
+
+  const updateQurbaniPlan = (partial: Partial<QurbaniSharePlan>) => {
+    setQurbaniPlan((prev) => ({ ...prev, ...partial }));
+  };
 
   // Reset or adapt interventions on customer switch
   useEffect(() => {
@@ -100,6 +136,14 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
     setIsDailySpendCapped(false);
     setIsEmergencyBufferActive(false);
     setIsMerchantQrOptimized(false);
+    // For Farhan Kabir (C006), offer active Utsob Shield demo readiness
+    if (selectedCustomerId === 'C006') {
+      setIsUtsobShieldActive(false);
+      setUtsobSavedAmount(2100);
+    } else {
+      setIsUtsobShieldActive(false);
+      setUtsobSavedAmount(1500);
+    }
   }, [selectedCustomerId]);
 
   // Sync document language attribute and font stylesheet
@@ -211,6 +255,15 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
     return calculateShortageRisk(profile);
   }, [profile]);
 
+  const utsobProfile = useMemo(() => {
+    return getCustomerUtsobProfile(
+      selectedCustomerId,
+      selectedFestivalId,
+      isUtsobShieldActive,
+      utsobSavedAmount
+    );
+  }, [selectedCustomerId, selectedFestivalId, isUtsobShieldActive, utsobSavedAmount]);
+
   // Dynamic risk calculation reflecting real-time interventions
   const risk = useMemo(() => {
     let reduction = 0;
@@ -316,6 +369,17 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         toggleEmergencyBuffer,
         isMerchantQrOptimized,
         toggleMerchantQrOptimized,
+
+        // Utsob Shield
+        isUtsobShieldActive,
+        toggleUtsobShield,
+        utsobSavedAmount,
+        withdrawUtsobPocket,
+        selectedFestivalId,
+        setSelectedFestivalId,
+        utsobProfile,
+        qurbaniPlan,
+        updateQurbaniPlan,
       }}
     >
       {children}

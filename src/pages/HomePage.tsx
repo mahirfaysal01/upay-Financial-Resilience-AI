@@ -7,6 +7,7 @@ import {
   Sliders,
   Bell,
   ShieldCheck,
+  Shield,
   CheckCircle2,
   Calendar,
   Sparkles,
@@ -1068,6 +1069,30 @@ export const HomePage: React.FC = () => {
                 <span>স্বয়ংক্রিয় বাফার গার্ড</span>
               </div>
             </div>
+          </div>
+
+          {/* Utsob Shield Feature Banner */}
+          <div className="rounded-[24px] bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl border border-amber-300">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/10 text-slate-950 text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>ট্র্যাক ০৩ ইনোভেশন · উৎসব শিল্ড</span>
+              </div>
+              <h3 className="font-heading font-extrabold text-2xl text-[var(--navy)]">
+                ঈদ ও উৎসবের আর্থিক শক অ্যাবজরবার: ৯০ দিন আগের প্রস্তুতি
+              </h3>
+              <p className="text-[14.5px] text-slate-900/85 max-w-2xl leading-relaxed font-medium">
+                আপনার ক্যাশ-ফ্লো মডেল ৯০ দিন আগেই ঈদ ও উৎসব শনাক্ত করে। উৎসবের ১৮,০০০ টাকার চাপকে প্রতিদিন ২১০ টাকার সঞ্চয়ে ভাগ করে মাস শেষের ঘাটতি ও ঋণ স্থায়ীভাবে দূর করুন। সাথে কোরবানি শেয়ার প্ল্যানার!
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/utsob-shield')}
+              className="btn-primary !bg-[var(--navy)] hover:!bg-[var(--navy)]/90 !text-white text-[14px] !py-3 !px-6 whitespace-nowrap shadow-md shrink-0 flex items-center gap-2 cursor-pointer"
+            >
+              <Shield className="w-4 h-4 text-amber-400" />
+              <span>উৎসব শিল্ড এক্সপ্লোর করুন</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </section>
 

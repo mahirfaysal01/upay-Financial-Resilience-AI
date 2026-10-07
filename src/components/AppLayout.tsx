@@ -13,6 +13,7 @@ import { HomePage } from '../pages/HomePage';
 import { Dashboard } from '../pages/Dashboard';
 import { SpendingIntelligence } from '../pages/SpendingIntelligence';
 import { CashFlowForecast } from '../pages/CashFlowForecast';
+import { UtsobShield } from '../pages/UtsobShield';
 import { FinancialRisk } from '../pages/FinancialRisk';
 import { WhatIfSimulator } from '../pages/WhatIfSimulator';
 import { SavingsGoals } from '../pages/SavingsGoals';
@@ -46,6 +47,7 @@ export const AppLayout: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/spending" element={<SpendingIntelligence />} />
           <Route path="/forecast" element={<CashFlowForecast />} />
+          <Route path="/utsob-shield" element={<UtsobShield />} />
           <Route path="/risk" element={<FinancialRisk />} />
           <Route path="/simulator" element={<WhatIfSimulator />} />
           <Route path="/goals" element={<SavingsGoals />} />

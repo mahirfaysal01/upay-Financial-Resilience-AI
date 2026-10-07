@@ -148,6 +148,22 @@ export function generateDeterministicCoachReply(query: string, ctx: AICoachConte
       : `Hello ${ctx.name}! I am your upay AI financial assistant. How can I help you today? You can ask me anything about your balance, budget, bills, or general financial questions!`;
   }
 
+  if (q.includes('eid') || q.includes('ঈদ') || q.includes('উৎসব') || q.includes('utsob') || q.includes('কোরবানি') || q.includes('qurbani') || q.includes('শিল্ড') || q.includes('shield') || q.includes('ভ্যালি') || q.includes('valley')) {
+    return lang === 'bn'
+      ? `🌙 **উপায় উৎসব শিল্ড (Utsob Shield) বিশ্লেষণ:**
+আপনার আগামী ৯০ দিনের ক্যাশ-ফ্লো মডেলে ঈদ-উল-ফিতরের আনুমানিক ১৮,০০০ টাকা খরচের কারণে একটি গভীর লাল 'ঈদ ভ্যালি' তৈরি হচ্ছে।
+১. **বোনাস টাইমিং ফাঁদ:** কোম্পানি বোনাস ঈদের মাত্র ৪ দিন আগে দেয়, অথচ শপিং ও ট্রেনের অগ্রিম টিকিট ২০ দিন আগেই কাটতে হয়। ফলে প্রতি বছর আপনি ক্রেডিট কার্ড বা চড়া দেনায় জড়িয়ে পড়েন।
+২. **সমাধান:** আজ থেকেই উপায় উৎসব পকেটে দৈনিক মাত্র ৳২১০ (সাপ্তাহিক ৳১,৪ ৭০) আলাদা করে রাখুন।
+৩. **ফলাফল:** ঈদের লাল ভ্যালি সমতল হয়ে যাবে এবং কোনো ধার-দেনা ছাড়াই উৎসব উদযাপন সম্ভব হবে।
+৪. **কোরবানি শেয়ার প্ল্যানার:** ঈদুল আজহার জন্য ১/৭ গরুর শেয়ার বা ছাগলের জন্য এখন থেকেই সাপ্তাহিক ৳৯৯০ সঞ্চয় করতে পারবেন।`
+      : `🌙 **upay Utsob Shield & Festival Shock Analysis:**
+Your 90-day cash-flow forecast detects a ৳18,000 festival shock for Eid-ul-Fitr, creating a deep red 'Eid Valley'.
+1. **Bonus Timing Trap:** Your bonus arrives 4 days before Eid, after you have already spent on credit. Every year you start the following month in deficit.
+2. **The Fix:** Start an Utsob Pocket today setting aside ৳210/day (৳1,470/week).
+3. **The Result:** The red Eid valley flattens completely with 0% debt reliance.
+4. **Qurbani Share Planner:** Plan ahead for your 1/7th cow share or goat sacrifice with zero cash crunch at the cattle haat!`;
+  }
+
   if (q.includes('risk') || q.includes('ঝুঁকি') || q.includes('shortage') || q.includes('ঘাটতি')) {
     if (ctx.riskLevel === 'HIGH') {
       const topAnomaly = ctx.anomalies.find((a) => a.isAnomaly) || ctx.anomalies[0];

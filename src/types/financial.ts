@@ -219,3 +219,75 @@ export interface GoalPlanningAnalysis {
   recommendedActions: string[];
   projectedCompletionDate: string;
 }
+
+export type FestivalSeason =
+  | 'EID_UL_FITR'
+  | 'EID_UL_ADHA'
+  | 'POHELA_BOISHAKH'
+  | 'SCHOOL_ADMISSION';
+
+export interface FestivalEvent {
+  id: string;
+  season: FestivalSeason;
+  name: string;
+  nameBn: string;
+  estimatedDate: string; // e.g. '2027-03-10'
+  daysAhead: number; // e.g. ~88 days
+  isMoonDependent: boolean;
+  typicalCostDefault: number;
+  description: string;
+  descriptionBn: string;
+  bonusExpectedDaysBefore: number;
+}
+
+export interface FestivalSpendingItem {
+  category: string;
+  categoryBn: string;
+  amount: number;
+  timingDaysBefore: number;
+  notes: string;
+}
+
+export interface UtsobShieldProfile {
+  festivalId: string;
+  festivalName: string;
+  festivalNameBn: string;
+  daysUntilFestival: number;
+  totalEstimatedCost: number;
+  expectedBonusAmount: number;
+  bonusArrivalDaysBefore: number;
+  spendingBreakdown: FestivalSpendingItem[];
+  dailyPocketAmount: number; // e.g. ৳210/day
+  weeklyPocketAmount: number; // e.g. ৳1,470/week
+  deficitWithoutShield: number;
+  deficitWithShield: number;
+  shieldActive: boolean;
+  accumulatedInPocket: number;
+}
+
+export interface UtsobProjectionPoint {
+  dayOffset: number;
+  date: string;
+  dayLabel: string;
+  unshieldedBalance: number;
+  shieldedBalance: number;
+  pocketAccumulation: number;
+  eventFlag?: string;
+  isEidValley: boolean;
+}
+
+export interface QurbaniSharePlan {
+  shareType: 'ONE_SEVENTH_COW' | 'FULL_GOAT' | 'FULL_COW' | 'PREMIUM_BULL';
+  shareTypeBn: string;
+  animalCost: number;
+  hasilAndTransportFee: number;
+  butcherAndProcessingFee: number;
+  totalTarget: number;
+  currentSaved: number;
+  weeksRemaining: number;
+  weeklyTarget: number;
+  dailyTarget: number;
+  participants: { name: string; shareRatio: number; paid: number }[];
+  qrMerchantReady: boolean;
+}
+

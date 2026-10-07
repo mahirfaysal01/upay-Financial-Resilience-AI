@@ -11,6 +11,7 @@ import {
   User,
   Bell,
   ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 import { useFinancial } from '../context/FinancialContext';
 import { useNotification } from '../context/NotificationContext';
@@ -29,6 +30,7 @@ export const Navbar: React.FC = () => {
     t,
     isFirebaseConnected,
     firebaseProjectId,
+    isUtsobShieldActive,
   } = useFinancial();
 
   const { unreadCount } = useNotification();
@@ -40,6 +42,12 @@ export const Navbar: React.FC = () => {
     { to: '/dashboard', label: t.nav.dashboard, icon: TrendingUp },
     { to: '/spending', label: t.nav.spending, icon: PieChart },
     { to: '/forecast', label: t.nav.forecast, icon: Calendar },
+    {
+      to: '/utsob-shield',
+      label: t.nav.utsobShield || (lang === 'bn' ? 'উৎসব শিল্ড' : 'Utsob Shield'),
+      icon: Sparkles,
+      badge: isUtsobShieldActive ? (lang === 'bn' ? 'পকেট সক্রিয়' : 'Active') : (lang === 'bn' ? 'ঈদ ৯০দ' : 'Eid 90d'),
+    },
     {
       to: '/risk',
       label: t.nav.risk,

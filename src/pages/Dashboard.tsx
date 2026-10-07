@@ -664,6 +664,46 @@ export const Dashboard: React.FC = () => {
         )}
       </section>
 
+      {/* 1.5) UTSOB SHIELD SEASONAL ALERT CARD */}
+      <section className="p-5 rounded-[22px] bg-gradient-to-r from-amber-500/10 via-yellow-400/15 to-amber-500/10 border border-amber-300/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center font-black shadow-md shrink-0">
+            <Sparkles className="w-6 h-6 text-slate-950" />
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">
+                {lang === 'bn' ? '৯০ দিনের উৎসব সতর্কতা' : '90-Day Seasonal Alert'}
+              </span>
+              <span className="text-[12px] font-bold text-amber-900">
+                {lang === 'bn' ? 'ঈদ-উল-ফিতর (৮৮ দিন বাকি)' : 'Eid-ul-Fitr (88d ahead)'}
+              </span>
+            </div>
+            <h4 className="font-heading font-extrabold text-[15.5px] text-[var(--navy)]">
+              {lang === 'bn'
+                ? 'সামনে আসছে ঈদ! উৎসব শিল্ডে প্রতিদিন ৳২১০ আলাদা করে লাল ভ্যালি ও ঋণের ফাঁদ এড়ান'
+                : 'Eid approaching! Spread your ৳18,000 festival shock into ৳210/day to eliminate debt'}
+            </h4>
+            <p className="text-[12.5px] text-slate-700">
+              {lang === 'bn'
+                ? 'কোম্পানির বোনাস ঈদের মাত্র ৪ দিন আগে আসে। কেনাকাটা ও ট্রেনের টিকিটের কারণে ক্রেডিট কার্ডের দেনা এড়াতে উৎসব পকেট শুরু করুন।'
+                : 'Your bonus arrives 4 days before Eid, after shopping is done on credit. Start Utsob Pocket today to flatten the Eid valley.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0 self-stretch md:self-auto">
+          <Link
+            to="/utsob-shield"
+            className="btn-primary !bg-[var(--navy)] hover:!bg-[var(--navy)]/90 !text-white text-[13px] py-2 px-4 rounded-xl flex items-center gap-2 whitespace-nowrap"
+          >
+            <Shield className="w-4 h-4 text-amber-400" />
+            <span>{lang === 'bn' ? 'উৎসব শিল্ড দেখুন' : 'Open Utsob Shield'}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      </section>
+
       {/* 2) ONE-TAP ACTIONABLE INTERVENTIONS (HACKATHON WINNER FEATURE) */}
       <section className="upay-card p-5 sm:p-6 space-y-4" aria-label={lang === 'bn' ? 'এক-ক্লিকে রেজিলিয়েন্স অ্যাকশন' : 'One-Tap Resilience Actions'}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
