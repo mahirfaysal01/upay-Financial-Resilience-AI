@@ -131,6 +131,23 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [selectedFestivalId, setSelectedFestivalId] = useState('durga-puja-2026');
   const [qurbaniPlan, setQurbaniPlan] = useState<QurbaniSharePlan>(() => getDefaultQurbaniPlan());
 
+  // 'Shekor' (শেকড়) — Seasonal Income Equalizer & Micro-Vault State
+  const [isShekorVaultActive, setIsShekorVaultActive] = useState<boolean>(true);
+  const [shekorInflowAmount, setShekorInflowAmount] = useState<number>(150000);
+  const [shekorFixedObligations, setShekorFixedObligations] = useState<number>(18000);
+  const [shekorBufferRatio, setShekorBufferRatio] = useState<number>(0.10);
+
+  const toggleShekorVault = () => setIsShekorVaultActive((prev) => !prev);
+  const withdrawShekorVault = () => setIsShekorVaultActive(false);
+
+  const activeShekorProfile = useMemo(() => {
+    return BENCHMARK_SHEKOR_PROFILES[selectedCustomerId] || undefined;
+  }, [selectedCustomerId]);
+
+  const shekorPlan = useMemo(() => {
+    return calculateShekorVaultPlan(shekorInflowAmount, shekorFixedObligations, shekorBufferRatio);
+  }, [shekorInflowAmount, shekorFixedObligations, shekorBufferRatio]);
+
   const [customGoals, setCustomGoals] = useState<Record<string, SavingsGoal[]>>({});
   const [firebaseLiveGoals, setFirebaseLiveGoals] = useState<Record<string, SavingsGoal[]>>({});
   const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(false);
@@ -162,6 +179,15 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
     } else {
       setIsUtsobShieldActive(false);
       setUtsobSavedAmount(1500);
+    }
+
+    // Sync Shekor profile defaults if seasonal worker selected
+    if (BENCHMARK_SHEKOR_PROFILES[selectedCustomerId]) {
+      const p = BENCHMARK_SHEKOR_PROFILES[selectedCustomerId];
+      setShekorInflowAmount(p.estimatedAnnualIncome);
+      setShekorFixedObligations(p.fixedAnnualObligations);
+      setShekorBufferRatio(p.emergencyBufferRatio);
+      setIsShekorVaultActive(true);
     }
   }, [selectedCustomerId]);
 
@@ -399,6 +425,19 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         utsobProfile,
         qurbaniPlan,
         updateQurbaniPlan,
+
+        // 'Shekor' (শেকড়) — Seasonal Income Equalizer & Micro-Vault
+        isShekorVaultActive,
+        toggleShekorVault,
+        shekorInflowAmount,
+        setShekorInflowAmount,
+        shekorBufferRatio,
+        setShekorBufferRatio,
+        shekorFixedObligations,
+        setShekorFixedObligations,
+        shekorPlan,
+        withdrawShekorVault,
+        activeShekorProfile,
       }}
     >
       {children}

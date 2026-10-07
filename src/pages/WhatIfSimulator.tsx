@@ -22,6 +22,7 @@ import {
   ReferenceLine,
   BarChart,
   Bar,
+  CartesianGrid,
 } from 'recharts';
 import { useFinancial } from '../context/FinancialContext';
 import { useNotification } from '../context/NotificationContext';
@@ -33,6 +34,7 @@ import {
   BENCHMARK_SHEKOR_PROFILES,
 } from '../services/shekorEngine';
 import { SimulationParams } from '../types/financial';
+import { toBengaliNumber } from '../utils/translations';
 
 export const WhatIfSimulator: React.FC = () => {
   const { customer, profile, formatMoney, lang } = useFinancial();
