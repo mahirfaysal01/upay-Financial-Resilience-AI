@@ -148,6 +148,20 @@ export function generateDeterministicCoachReply(query: string, ctx: AICoachConte
       : `Hello ${ctx.name}! I am your upay AI financial assistant. How can I help you today? You can ask me anything about your balance, budget, bills, or general financial questions!`;
   }
 
+  if (q.includes('puja') || q.includes('পূজা') || q.includes('দুর্গা') || q.includes('durga')) {
+    return lang === 'bn'
+      ? `🪔 **শারদীয় দুর্গাপূজা ও উৎসব শিল্ড প্রস্তুতি:**
+আসন্ন দুর্গাপূজার জন্য আপনার সম্ভাব্য বাজেট আনুমানিক ৳১৬,০০০ (নতুন পোশাক: ৳৬,৫০০, মণ্ডপ দর্শন ও ভ্রমণ: ৳৩,৮০০, পূজার চাঁদা ও অঞ্জলি: ৳৩,৪০০, বিজয়া দশমীর মিষ্টি: ৳২,৩০০)।
+১. পূজার বাকি মাত্র ১৪ দিন! এককালীন চাপের বদলে এখনই উৎসব শিল্ড সক্রিয় করুন।
+২. উপায় ডিজিটাল মার্চেন্ট কিউআর দিয়ে শপিং ও কেনাকাটায় ০% ক্যাশ-আউট ফি সুবিধা উপভোগ করুন।
+৩. উৎসবের সময় আপনার ব্যালেন্স যেন ১,০০০ টাকার নিচে না নামে সেজন্য এআই অটো-বাফার সক্রিয় রয়েছে।`
+      : `🪔 **Sharodiya Durga Puja & Utsob Shield Advisory:**
+Your estimated Durga Puja budget is ~৳16,000 (Festival attire: ৳6,500, Mandap hopping & food: ৳3,800, Puja chada & anjali: ৳3,400, Bijoya Dashami sweets: ৳2,300).
+1. With only 14 days remaining, activate Utsob Shield to spread this immediate shock smoothly.
+2. Use upay Merchant QR for shopping with 0% cash-out fees.
+3. Your AI liquidity floor ensures your wallet balance stays safely above ৳1,000 throughout the celebrations.`;
+  }
+
   if (q.includes('eid') || q.includes('ঈদ') || q.includes('উৎসব') || q.includes('utsob') || q.includes('কোরবানি') || q.includes('qurbani') || q.includes('শিল্ড') || q.includes('shield') || q.includes('ভ্যালি') || q.includes('valley')) {
     return lang === 'bn'
       ? `🌙 **উপায় উৎসব শিল্ড (Utsob Shield) বিশ্লেষণ:**

@@ -29,6 +29,9 @@ import {
   Volume2,
   QrCode,
   Check,
+  Wheat,
+  PiggyBank,
+  BadgeDollarSign,
 } from 'lucide-react';
 import {
   LineChart,
@@ -560,7 +563,9 @@ export const Dashboard: React.FC = () => {
                       <span>{verdict.riskLevel === 'HIGH' ? (lang === 'bn' ? 'উচ্চ ঝুঁকি' : 'High Risk') : verdict.riskLevel === 'MODERATE' ? (lang === 'bn' ? 'মাঝারি ঝুঁকি' : 'Moderate') : (lang === 'bn' ? 'স্থিতিশীল' : 'Stable')}</span>
                     </span>
                     <span className="text-xs text-white/70">
-                      {lang === 'bn' ? `ঘাটতি পর্যন্ত অবশিষ্ট: প্রায় ${toBengaliNumber(verdict.daysUntilDeficit || 9)} দিন` : `Days until deficit: ~${verdict.daysUntilDeficit || 9} days`}
+                      {lang === 'bn'
+                        ? `ঘাটতি পর্যন্ত অবশিষ্ট: প্রায় ${toBengaliNumber(verdict.daysUntilDeficit || forecast.daysUntilCriticalBalance || profile.daysUntilNextIncome || 6)} দিন`
+                        : `Days until deficit: ~${verdict.daysUntilDeficit || forecast.daysUntilCriticalBalance || profile.daysUntilNextIncome || 6} days`}
                     </span>
                   </div>
 
@@ -673,21 +678,21 @@ export const Dashboard: React.FC = () => {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">
-                {lang === 'bn' ? '৯০ দিনের উৎসব সতর্কতা' : '90-Day Seasonal Alert'}
+                {lang === 'bn' ? 'আসন্ন উৎসব সতর্কতা' : 'Upcoming Festival Alert'}
               </span>
               <span className="text-[12px] font-bold text-amber-900">
-                {lang === 'bn' ? 'ঈদ-উল-ফিতর (৮৮ দিন বাকি)' : 'Eid-ul-Fitr (88d ahead)'}
+                {lang === 'bn' ? 'শারদীয় দুর্গাপূজা (১৪ দিন) ও ঈদ-উল-ফিতর' : 'Durga Puja (14d) & Eid-ul-Fitr'}
               </span>
             </div>
             <h4 className="font-heading font-extrabold text-[15.5px] text-[var(--navy)]">
               {lang === 'bn'
-                ? 'সামনে আসছে ঈদ! উৎসব শিল্ডে প্রতিদিন ৳২১০ আলাদা করে লাল ভ্যালি ও ঋণের ফাঁদ এড়ান'
-                : 'Eid approaching! Spread your ৳18,000 festival shock into ৳210/day to eliminate debt'}
+                ? 'সামনে শারদীয় দুর্গাপূজা ও ঈদ! উৎসব শিল্ডে প্রতিদিন ক্ষুদ্র সঞ্চয় করে লাল ভ্যালি ও ঋণের ফাঁদ এড়ান'
+                : 'Upcoming Durga Puja & Eid! Activate Utsob Shield to spread festival expenses and eliminate debt'}
             </h4>
             <p className="text-[12.5px] text-slate-700">
               {lang === 'bn'
-                ? 'কোম্পানির বোনাস ঈদের মাত্র ৪ দিন আগে আসে। কেনাকাটা ও ট্রেনের টিকিটের কারণে ক্রেডিট কার্ডের দেনা এড়াতে উৎসব পকেট শুরু করুন।'
-                : 'Your bonus arrives 4 days before Eid, after shopping is done on credit. Start Utsob Pocket today to flatten the Eid valley.'}
+                ? 'পূজার নতুন পোশাক, অঞ্জলি ও মণ্ডপ পরিক্রমা কিংবা ঈদের শপিং—উৎসবের বড় ব্যয়ের চাপ আজ থেকেই উৎসব পকেটে সামলে নিন।'
+                : 'Puja clothing, anjali & mandap visits, or Eid travel—spread your upcoming festival expenses into automated pocket savings.'}
             </p>
           </div>
         </div>
@@ -1029,7 +1034,13 @@ export const Dashboard: React.FC = () => {
             <p className="text-caption text-[var(--text-muted)]">
               {forecast.monthEndForecast > 1000
                 ? (lang === 'bn' ? 'নিরাপদ সংরক্ষিত ব্যালেন্স' : 'Sustained positive liquidity')
-                : (lang === 'bn' ? '৳১,০০০ এর নিচে নামবে ৯ দিনে' : 'Sub-৳1,000 threshold in 9 days')}
+                : forecast.daysUntilCriticalBalance
+                ? (lang === 'bn'
+                    ? `৳১,০০০ এর নিচে নামবে ${toBengaliNumber(forecast.daysUntilCriticalBalance)} দিনে`
+                    : `Sub-৳1,000 threshold in ${forecast.daysUntilCriticalBalance} days`)
+                : (lang === 'bn'
+                    ? `বেতনের পূর্বে ঘাটতি ঝুঁকি বিদ্যমান`
+                    : 'Sub-৳1,000 risk before income')}
             </p>
           </div>
         </div>
@@ -1428,6 +1439,79 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Card: 'শেকড়' (Shekor) Seasonal Income Equalizer & UCB Micro-Vault */}
+          <div className="upay-card p-6 space-y-4 bg-gradient-to-br from-amber-50/70 via-white to-emerald-50/50 border-amber-300 shadow-sm relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center font-bold">
+                  <Wheat className="w-5 h-5 text-amber-700" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold px-2 py-0.2 rounded-full bg-amber-200 text-amber-900">
+                      {lang === 'bn' ? 'মৌসুমী রেজিলিয়েন্স' : 'Seasonal Resilience'}
+                    </span>
+                    <span className="text-[11px] font-bold px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-800">
+                      ৭.২৫% সুদ
+                    </span>
+                  </div>
+                  <h3 className="text-[var(--brand-primary)] font-heading font-extrabold text-[17px] mt-0.5">
+                    {lang === 'bn' ? '‘শেকড়’ সিজনাল ইনকাম ইকুয়ালাইজার' : '‘Shekor’ Seasonal Income Equalizer'}
+                  </h3>
+                </div>
+              </div>
+              <span className="text-[12px] font-extrabold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-full">
+                {lang === 'bn' ? 'UCB মাইক্রো-ভল্ট' : 'UCB Micro-Vault'}
+              </span>
+            </div>
+
+            <p className="text-caption text-[var(--text-muted)] leading-relaxed">
+              {lang === 'bn'
+                ? 'কৃষক, জেলে ও সিজনাল গিগ-ওয়ার্কারদের ফসল তোলার এককালীন বড় আয়কে (যেমন: ৳১,৫০,০০০) সারা বছরের সাপ্তাহিক সম্মানজনক বেতনে (৳২,২৭৫/সপ্তাহ) রূপান্তর করে মঙ্গা বা খরা মৌসুম প্রতিরোধ করুন।'
+                : 'Transforms volatile agricultural harvest surges into steady automated weekly salaries in UCB Micro-Vault, completely eliminating off-season deficits.'}
+            </p>
+
+            {/* Micro-Vault Metrics Preview */}
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
+              <div className="p-2.5 rounded-xl bg-white/80 border border-amber-200/80 space-y-0.5">
+                <span className="text-[11.5px] font-semibold text-slate-600">
+                  {lang === 'bn' ? 'সাপ্তাহিক বেতন (VDA)' : 'Weekly Salary (VDA)'}
+                </span>
+                <p className="font-heading font-extrabold text-[16px] text-emerald-700">
+                  {formatMoney(2275)}
+                </p>
+                <p className="text-[10.5px] text-slate-500">
+                  {lang === 'bn' ? 'প্রতি রবিবারে মূল ওয়ালেটে' : 'Every Sunday to wallet'}
+                </p>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-200/80 space-y-0.5">
+                <span className="text-[11.5px] font-semibold text-slate-600">
+                  {lang === 'bn' ? 'জরুরি সেফটি বাফার (১০%)' : 'Safety Buffer (10%)'}
+                </span>
+                <p className="font-heading font-extrabold text-[16px] text-[var(--brand-primary)]">
+                  {formatMoney(13200)}
+                </p>
+                <p className="text-[10.5px] text-slate-500">
+                  {lang === 'bn' ? 'আলাদা লকড রিজার্ভ' : 'Locked buffer reserve'}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-1 flex items-center justify-between text-[12px]">
+              <span className="text-[var(--text-muted)]">
+                {lang === 'bn' ? 'অফ-সিজন বা মঙ্গা সুরক্ষা: ১২ মাস নিশ্চিত' : '12-Month Monga Season Immunity Guaranteed'}
+              </span>
+              <Link
+                to="/simulator"
+                className="font-bold text-[var(--brand-primary)] hover:text-amber-700 inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>{lang === 'bn' ? 'সিমুলেশন দেখুন' : 'Explore Simulator'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

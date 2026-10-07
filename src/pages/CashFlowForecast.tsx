@@ -37,6 +37,7 @@ export const CashFlowForecast: React.FC = () => {
     toggleUtsobShield,
     utsobProfile,
     utsobSavedAmount,
+    selectedFestivalId,
   } = useFinancial();
 
   const { notifySuccess, notifyInfo } = useNotification();
@@ -53,11 +54,12 @@ export const CashFlowForecast: React.FC = () => {
     notes: p.notes,
   }));
 
-  // 90-Day seasonal Utsob forecast with Eid Valley
+  // 90-Day seasonal Utsob forecast with Festival Valley
   const utsob90 = calculateUtsob90DayForecast(
     profile,
     isUtsobShieldActive,
-    utsobSavedAmount
+    utsobSavedAmount,
+    selectedFestivalId
   );
 
   const utsobChartData = utsob90.projections.map((p) => ({

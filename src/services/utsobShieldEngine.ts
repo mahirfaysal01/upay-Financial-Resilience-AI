@@ -12,6 +12,19 @@ import {
  */
 export const FESTIVAL_CALENDAR: FestivalEvent[] = [
   {
+    id: 'durga-puja-2026',
+    season: 'DURGA_PUJA',
+    name: 'Sharodiya Durga Puja',
+    nameBn: 'শারদীয় দুর্গাপূজা (আসন্ন দুর্গোৎসব)',
+    estimatedDate: '2026-10-20',
+    daysAhead: 14,
+    isMoonDependent: true,
+    typicalCostDefault: 16000,
+    description: 'Upcoming grand autumn festival in Bangladesh (Maha Saptami to Bijoya Dashami). Major expenses include festival clothing, puja chada, mandap hopping, and Dashami sweets.',
+    descriptionBn: 'চলতি অক্টোবর মাসের আসন্ন শারদীয় দুর্গোৎসব (মহাসপ্তমী থেকে বিজয়া দশমী)। নতুন পোশাক, পূজার চাঁদা ও অঞ্জলি, মণ্ডপ দর্শন, ভ্রমণ এবং বিজয়ার মিষ্টি ও পারিবারিক আপ্যায়ন।',
+    bonusExpectedDaysBefore: 3,
+  },
+  {
     id: 'eid-ul-fitr-2027',
     season: 'EID_UL_FITR',
     name: 'Eid-ul-Fitr',
@@ -115,11 +128,11 @@ export const SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING: Record<string, {
     bonusDaysBefore: 4,
     breakdown: [
       {
-        category: 'Eid Shopping',
+        category: 'Festival Shopping',
         categoryBn: 'পোশাক ও কেনাকাটা',
         amount: 6500,
         timingDaysBefore: 20,
-        notes: 'পরিবার ও নিজের জন্য পোশাক।',
+        notes: 'পরিবার ও নিজের জন্য উৎসবের পোশাক।',
       },
       {
         category: 'Travel Home',
@@ -129,15 +142,15 @@ export const SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING: Record<string, {
         notes: 'বাসের টিকিট ও ভ্রমণ।',
       },
       {
-        category: 'Salami',
-        categoryBn: 'সালামি ও দান-সদকা',
+        category: 'Gifts & Salami',
+        categoryBn: 'সালামি ও উৎসবের উপহার',
         amount: 3200,
         timingDaysBefore: 1,
-        notes: 'ঈদের সালামি।',
+        notes: 'স্বজনদের উপহার।',
       },
       {
         category: 'Feast',
-        categoryBn: 'পারিবারিক খাবার',
+        categoryBn: 'পারিবারিক খাবার ও মিষ্টিমুখ',
         amount: 1800,
         timingDaysBefore: 2,
         notes: 'উৎসবের রান্নাবান্না।',
@@ -150,22 +163,22 @@ export const SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING: Record<string, {
     bonusDaysBefore: 5,
     breakdown: [
       {
-        category: 'Eid Shopping',
+        category: 'Festival Shopping',
         categoryBn: 'পোশাক ও উপহার',
         amount: 7000,
         timingDaysBefore: 18,
         notes: 'অগ্রিম উপহার সামগ্রী।',
       },
       {
-        category: 'Travel Home',
+        category: 'Travel',
         categoryBn: 'পরিবারের সাথে ভ্রমণ',
         amount: 3000,
         timingDaysBefore: 10,
         notes: 'যাতায়াত।',
       },
       {
-        category: 'Salami',
-        categoryBn: 'সালামি ও মিষ্টিমুখ',
+        category: 'Gifts',
+        categoryBn: 'উৎসবের সালামি ও মিষ্টিমুখ',
         amount: 4000,
         timingDaysBefore: 1,
         notes: 'উপহার।',
@@ -182,30 +195,72 @@ export const SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING: Record<string, {
 };
 
 /**
+ * Dedicated Durga Puja breakdown
+ */
+const DURGA_PUJA_SPENDING = {
+  totalCost: 16000,
+  bonusAmount: 12000,
+  bonusDaysBefore: 3,
+  breakdown: [
+    {
+      category: 'Puja Clothing & Shopping',
+      categoryBn: 'নতুন পোশাক ও পারিবারিক শপিং',
+      amount: 6500,
+      timingDaysBefore: 7,
+      notes: 'পূজার নতুন জামাকাপড় ও স্বজনদের উপহারসামগ্রী ক্রয়।',
+    },
+    {
+      category: 'Mandap Visits & Travel',
+      categoryBn: 'মণ্ডপ দর্শন, খাবার ও যাতায়াত',
+      amount: 3800,
+      timingDaysBefore: 3,
+      notes: 'সপ্তমী থেকে নবমী পর্যন্ত ঢাকা ও ঢাকার বাইরের মণ্ডপ পরিক্রমা ও খাবার।',
+    },
+    {
+      category: 'Puja Chada & Anjali',
+      categoryBn: 'পূজার চাঁদা, অঞ্জলি ও উপহার',
+      amount: 3400,
+      timingDaysBefore: 5,
+      notes: 'পারিবারিক বা স্থানীয় পূজা মণ্ডপে চাঁদা ও অঞ্জলির অর্ঘ্য।',
+    },
+    {
+      category: 'Bijoya Dashami Feast & Sweets',
+      categoryBn: 'বিজয়া দশমী ও মিষ্টি আপ্যায়ন',
+      amount: 2300,
+      timingDaysBefore: 0,
+      notes: 'দশমীর মিষ্টি বিতরণ, শুভেচ্ছা বিনিময় ও পারিবারিক মিলনমেলা।',
+    },
+  ],
+};
+
+/**
  * Returns the customer's festival shock profile
  */
 export function getCustomerUtsobProfile(
   customerId: string,
-  festivalId: string = 'eid-ul-fitr-2027',
+  festivalId: string = 'durga-puja-2026',
   isShieldActive: boolean = false,
   accumulatedInPocket: number = 0
 ): UtsobShieldProfile {
   const festival = FESTIVAL_CALENDAR.find((f) => f.id === festivalId) || FESTIVAL_CALENDAR[0];
-  const customData = SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING[customerId] || SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING['C006'];
+  
+  let customData = SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING[customerId] || SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING['C006'];
+
+  // If Durga Puja is selected, use authentic Durga Puja breakdown
+  if (festival.season === 'DURGA_PUJA') {
+    customData = DURGA_PUJA_SPENDING;
+  }
 
   const daysUntil = festival.daysAhead;
   const totalCost = customData.totalCost;
   const expectedBonus = customData.bonusAmount;
 
   // Daily micro amount to accumulate starting today
-  // e.g. 18,000 / 88 days ≈ ৳205 - ৳210
   const dailyPocketAmount = Math.ceil(totalCost / daysUntil / 10) * 10 || 210;
   const weeklyPocketAmount = dailyPocketAmount * 7;
 
-  // Deficit calculation:
-  // Without shield: before bonus arrives on Day -4, user has spent 8,500 + 3,200 = 11,700 on credit.
-  // After Eid, they pay credit bills + interest and start next month with deep negative.
-  const deficitWithoutShield = Math.max(0, totalCost - (expectedBonus * 0.55)); // Typical month-end deficit
+  // Deficit calculation
+  const deficitWithoutShield = Math.max(0, totalCost - (expectedBonus * 0.55));
   const deficitWithShield = isShieldActive ? 0 : deficitWithoutShield;
 
   return {
@@ -227,32 +282,40 @@ export function getCustomerUtsobProfile(
 }
 
 /**
- * Calculates a 90-day extended trajectory visualizing the deep red "Eid Valley"
+ * Calculates a 90-day extended trajectory visualizing the festival valley
  * and demonstrates how the Utsob Shield completely flattens it!
  */
 export function calculateUtsob90DayForecast(
   profile: CustomerFinancialProfile,
   isShieldActive: boolean,
-  accumulatedPocketFloat: number = 0
+  accumulatedPocketFloat: number = 0,
+  festivalId: string = 'durga-puja-2026'
 ): {
   projections: UtsobProjectionPoint[];
   valleyLowestPoint: number;
   shieldLowestPoint: number;
   dailyPocketTarget: number;
-  daysToEid: number;
+  daysToFestival: number;
   totalFestivalShock: number;
+  festivalName: string;
 } {
   const currentBalance = profile.currentBalance;
   const dailySpend = profile.averageDailySpending;
   const daysUntilMonthlySalary = profile.daysUntilNextIncome;
   const monthlySalary = profile.monthlyIncome;
 
-  const festivalData = SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING[profile.customerId] || SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING['C006'];
+  const festival = FESTIVAL_CALENDAR.find((f) => f.id === festivalId) || FESTIVAL_CALENDAR[0];
+  const isDurgaPuja = festival.season === 'DURGA_PUJA';
+
+  const festivalData = isDurgaPuja
+    ? DURGA_PUJA_SPENDING
+    : (SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING[profile.customerId] || SYNTHETIC_CUSTOMER_FESTIVAL_SPENDING['C006']);
+
   const totalShock = festivalData.totalCost;
   const bonusAmount = festivalData.bonusAmount;
-  const daysToEid = 88; // Eid Day offset
+  const daysToFestival = festival.daysAhead;
 
-  const dailyPocketTarget = Math.ceil(totalShock / daysToEid / 10) * 10 || 210;
+  const dailyPocketTarget = Math.ceil(totalShock / daysToFestival / 10) * 10 || 210;
 
   const projections: UtsobProjectionPoint[] = [];
 
@@ -263,66 +326,84 @@ export function calculateUtsob90DayForecast(
   let valleyLowest = currentBalance;
   let shieldLowest = currentBalance;
 
-  // Today base date
+  // Base date (October 2026)
   const baseDate = new Date('2026-10-06T00:00:00Z');
 
   for (let day = 1; day <= 90; day++) {
     const projDate = new Date(baseDate.getTime() + day * 24 * 60 * 60 * 1000);
     const dateStr = projDate.toISOString().split('T')[0];
-    const daysBeforeEid = daysToEid - day;
+    const daysBeforeEvent = daysToFestival - day;
 
-    // Routine spending
+    // Routine daily spending
     let routineSpend = dailySpend;
 
     // Monthly regular salary cycles (Day 11, Day 41, Day 71)
     const isSalaryDay = (day % 30 === (daysUntilMonthlySalary % 30));
     const salaryCredit = isSalaryDay ? monthlySalary : 0;
 
-    // Festival Shock schedule (when unshielded expenses hit):
     let festivalExpenseToday = 0;
     let eventFlag: string | undefined = undefined;
 
-    // 1. Eid Shopping hits ~22 days before Eid (Day 66)
-    if (daysBeforeEid === 22) {
-      festivalExpenseToday += 8500;
-      eventFlag = '🛍️ ঈদের শপিং শুরু (-২২ দিন)';
-    }
+    if (isDurgaPuja) {
+      // --- DURGA PUJA SHOCK SCHEDULE (Days 1 to 14 in Oct 2026) ---
+      // 1. Puja shopping hits 7 days before Dashami (Day 7)
+      if (daysBeforeEvent === 7) {
+        festivalExpenseToday += 6500;
+        eventFlag = '🛍️ দুর্গাপূজার নতুন পোশাক ও শপিং (-৭ দিন)';
+      }
+      // 2. Puja Chada / Anjali hits 4 days before Dashami (Day 10)
+      if (daysBeforeEvent === 4) {
+        festivalExpenseToday += 3400;
+        eventFlag = '🪔 মণ্ডপ চাঁদা ও অঞ্জলি অনুদান (-৪ দিন)';
+      }
+      // 3. Puja bonus arrives 3 days before Dashami (Day 11)
+      const bonusToday = (daysBeforeEvent === 3) ? bonusAmount : 0;
+      if (daysBeforeEvent === 3) {
+        eventFlag = '🎁 কোম্পানির উৎসব বোনাস ক্রেডিট (+৩ দিন)';
+      }
+      // 4. Mandap Hopping hits on Saptami-Navami (Day 12 & 13)
+      if (daysBeforeEvent === 2 || daysBeforeEvent === 1) {
+        festivalExpenseToday += (daysBeforeEvent === 2 ? 2000 : 1800);
+        eventFlag = daysBeforeEvent === 2 ? '🛕 মহাসপ্তমী ও মণ্ডপ দর্শন' : '✨ মহানবমী ও সাংস্কৃতিক উৎসব';
+      }
+      // 5. Bijoya Dashami (Day 14)
+      if (daysBeforeEvent === 0) {
+        festivalExpenseToday += 2300;
+        eventFlag = '🌺 শুভ বিজয়া দশমী ও মিষ্টিমুখ';
+      }
 
-    // 2. Train/Bus ticket booking hits ~15 days before Eid (Day 73)
-    if (daysBeforeEid === 15) {
-      festivalExpenseToday += 3200;
-      eventFlag = '🚆 বাড়ি ফেরার অগ্রিম টিকিট (-১৫ দিন)';
-    }
+      unshieldedBalance = unshieldedBalance - routineSpend - festivalExpenseToday + salaryCredit + ((daysBeforeEvent === 3) ? bonusAmount : 0);
+    } else {
+      // --- EID-UL-FITR SHOCK SCHEDULE (Day 66 to 88 in March 2027) ---
+      if (daysBeforeEvent === 22) {
+        festivalExpenseToday += 8500;
+        eventFlag = '🛍️ ঈদের শপিং শুরু (-২২ দিন)';
+      }
+      if (daysBeforeEvent === 15) {
+        festivalExpenseToday += 3200;
+        eventFlag = '🚆 বাড়ি ফেরার অগ্রিম টিকিট (-১৫ দিন)';
+      }
+      if (daysBeforeEvent === 3) {
+        festivalExpenseToday += 2000;
+        eventFlag = '🍲 সেমাই ও পারিবারিক ভোজ (-৩ দিন)';
+      }
+      const bonusToday = (daysBeforeEvent === 4) ? bonusAmount : 0;
+      if (daysBeforeEvent === 4) {
+        eventFlag = '🎁 কোম্পানির ঈদ বোনাস ক্রেডিট (+৪ দিন)';
+      }
+      if (daysBeforeEvent === 1 || daysBeforeEvent === 0) {
+        festivalExpenseToday += (daysBeforeEvent === 1 ? 2000 : 2300);
+        eventFlag = daysBeforeEvent === 0 ? '🌙 পবিত্র ঈদুল ফিতর ও সালামি' : '✨ চাঁদ রাত ও সালামি বিতরণ';
+      }
 
-    // 3. Feast groceries hit ~3 days before Eid (Day 85)
-    if (daysBeforeEid === 3) {
-      festivalExpenseToday += 2000;
-      eventFlag = '🍲 সেমাই ও পারিবারিক ভোজ (-৩ দিন)';
+      unshieldedBalance = unshieldedBalance - routineSpend - festivalExpenseToday + salaryCredit + bonusToday;
     }
-
-    // 4. Festival Bonus arrives 4 days before Eid (Day 84)
-    const bonusToday = (daysBeforeEid === 4) ? bonusAmount : 0;
-    if (daysBeforeEid === 4) {
-      eventFlag = '🎁 কোম্পানির ঈদ বোনাস ক্রেডিট (+৪ দিন)';
-    }
-
-    // 5. Salami hits on Eid Eve & Day (Day 87 & 88)
-    if (daysBeforeEid === 1 || daysBeforeEid === 0) {
-      festivalExpenseToday += (daysBeforeEid === 1 ? 2000 : 2300);
-      eventFlag = daysBeforeEid === 0 ? '🌙 পবিত্র ঈদুল ফিতর ও সালামি' : '✨ চাঁদ রাত ও সালামি বিতরণ';
-    }
-
-    // --- UNSHIELDED TRAJECTORY ---
-    // User doesn't set aside money. When shopping/tickets hit in Day 66-73, balance plunges deep into negative
-    unshieldedBalance = unshieldedBalance - routineSpend - festivalExpenseToday + salaryCredit + bonusToday;
 
     // --- SHIELDED TRAJECTORY (Utsob Shield Active) ---
     if (isShieldActive) {
-      // User sets aside dailyPocketTarget (৳210) into protected Utsob Pocket
       const dailyPocketDeposit = dailyPocketTarget;
       pocketFloat += dailyPocketDeposit;
 
-      // When festival expenses hit, they are paid directly from the Utsob Pocket!
       let paidFromPocket = 0;
       if (festivalExpenseToday > 0) {
         paidFromPocket = Math.min(pocketFloat, festivalExpenseToday);
@@ -330,14 +411,15 @@ export function calculateUtsob90DayForecast(
       }
 
       const remainderOutOfPocket = festivalExpenseToday - paidFromPocket;
-      // Main wallet pays only normal burn + daily pocket deposit + any remainder
-      shieldedBalance = shieldedBalance - routineSpend - dailyPocketDeposit - remainderOutOfPocket + salaryCredit + bonusToday;
+      const bonusOnThisDay = isDurgaPuja ? ((daysBeforeEvent === 3) ? bonusAmount : 0) : ((daysBeforeEvent === 4) ? bonusAmount : 0);
+      shieldedBalance = shieldedBalance - routineSpend - dailyPocketDeposit - remainderOutOfPocket + salaryCredit + bonusOnThisDay;
     } else {
       shieldedBalance = unshieldedBalance;
     }
 
-    // Is it in the deep red "Eid Valley" zone? (Days 65 to 87 before bonus compensates)
-    const isValleyZone = daysBeforeEid <= 25 && daysBeforeEid >= -3 && unshieldedBalance < 1500;
+    const isValleyZone = isDurgaPuja
+      ? (daysBeforeEvent <= 8 && daysBeforeEvent >= -1 && unshieldedBalance < 1500)
+      : (daysBeforeEvent <= 25 && daysBeforeEvent >= -3 && unshieldedBalance < 1500);
 
     if (unshieldedBalance < valleyLowest) {
       valleyLowest = unshieldedBalance;
@@ -363,8 +445,9 @@ export function calculateUtsob90DayForecast(
     valleyLowestPoint: valleyLowest,
     shieldLowestPoint: shieldLowest,
     dailyPocketTarget,
-    daysToEid,
+    daysToFestival,
     totalFestivalShock: totalShock,
+    festivalName: festival.nameBn,
   };
 }
 

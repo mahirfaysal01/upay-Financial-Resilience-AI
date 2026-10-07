@@ -149,6 +149,9 @@ export interface RiskFactor {
 export interface ShortageRisk {
   probability: number; // e.g. 0.82
   riskLevel: 'LOW' | 'MODERATE' | 'HIGH';
+  baseRate?: number;
+  shapSum?: number;
+  additiveEquation?: string;
   factors: RiskFactor[];
   metrics: {
     accuracy: number;
@@ -221,6 +224,7 @@ export interface GoalPlanningAnalysis {
 }
 
 export type FestivalSeason =
+  | 'DURGA_PUJA'
   | 'EID_UL_FITR'
   | 'EID_UL_ADHA'
   | 'POHELA_BOISHAKH'
@@ -289,5 +293,53 @@ export interface QurbaniSharePlan {
   dailyTarget: number;
   participants: { name: string; shareRatio: number; paid: number }[];
   qrMerchantReady: boolean;
+}
+
+/**
+ * 'Shekor' (শেকড়) — Seasonal Income Equalizer & Micro-Vault
+ * For farmers, fishermen, and seasonal gig workers with bumper harvests and dry seasons (Monga)
+ */
+export interface ShekorProfile {
+  customerId: string;
+  isSeasonalWorker: boolean;
+  occupation: 'Farmer' | 'Seasonal Gig Worker' | 'Fisherman' | 'Day Laborer';
+  occupationBn: string;
+  seasonalInflowMonths: number[]; // e.g., [5, 11] (May for Boro, Nov for Aman)
+  seasonalHarvestNames: string[];
+  estimatedAnnualIncome: number; // e.g. ৳1,50,000 bumper harvest
+  fixedAnnualObligations: number; // DPS, loan repayments e.g. ৳18,000
+  emergencyBufferRatio: number; // Default 0.10 (10%)
+  currentVaultBalance: number;
+  virtualDailyAllowance: number; // VDA in BDT
+  virtualWeeklySalary: number; // VDA * 7 in BDT
+  annualInterestEarned: number; // UCB Micro-Vault interest (7.25% p.a.)
+  nextSundayPayoutDate: string;
+  isVaultActive: boolean;
+  totalDisbursedSoFar: number;
+}
+
+export interface ShekorSimulationPoint {
+  monthOffset: number;
+  monthName: string;
+  monthNameBn: string;
+  seasonType: 'HARVEST_SURGE' | 'LEAN_PERIOD' | 'MONGA_DEFICIT';
+  seasonTypeBn: string;
+  unmanagedBalance: number; // Rapid burnout by Month 3 -> zero cliff
+  shekorManagedBalance: number; // Steady, smoothed balance
+  weeklySalaryDisbursed: number; // e.g. ৳2,650 every Sunday
+  vaultInterestAccrued: number;
+  isMongaPeriod: boolean;
+}
+
+export interface ShekorVaultPlan {
+  annualInflow: number;
+  fixedObligations: number;
+  bufferAmount: number;
+  distributablePool: number;
+  virtualDailyAllowance: number;
+  weeklySundaySalary: number;
+  projectedAnnualYield: number;
+  runwayMonths: number;
+  payoutSchedule: { weekNumber: number; date: string; amount: number; status: 'DISBURSED' | 'SCHEDULED' }[];
 }
 

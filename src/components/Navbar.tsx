@@ -46,7 +46,9 @@ export const Navbar: React.FC = () => {
       to: '/utsob-shield',
       label: t.nav.utsobShield || (lang === 'bn' ? 'উৎসব শিল্ড' : 'Utsob Shield'),
       icon: Sparkles,
-      badge: isUtsobShieldActive ? (lang === 'bn' ? 'পকেট সক্রিয়' : 'Active') : (lang === 'bn' ? 'ঈদ ৯০দ' : 'Eid 90d'),
+      badge: isUtsobShieldActive
+        ? (lang === 'bn' ? 'পকেট সক্রিয়' : 'Active')
+        : (lang === 'bn' ? 'পূজা ১৪দ' : 'Puja 14d'),
     },
     {
       to: '/risk',

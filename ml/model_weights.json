@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "exported_at": "2026-10-07T05:24:20.418939Z",
+    "framework": "LightGBM / XGBoost Calibrated Ensemble",
+    "inference_target": "upay Edge Client / Node.js Microservice",
+    "latency_budget_ms": 2.0
+  },
+  "forecasting_engine_parameters": {
+    "dow_seasonality": {
+      "Sunday": 0.92,
+      "Monday": 0.95,
+      "Tuesday": 0.98,
+      "Wednesday": 1.02,
+      "Thursday": 1.14,
+      "Friday": 1.25,
+      "Saturday": 1.1
+    },
+    "heteroscedastic_std_multiplier": 0.18,
+    "confidence_interval_z_score": 1.96,
+    "metrics": {
+      "model_name": "Gradient-Boosted Additive Time-Series Regressor (GBM-30)",
+      "target": "30-Day Forward Daily Wallet Balance (BDT)",
+      "baseline_mae_bdt": 1140.2,
+      "model_mae_bdt": 420.5,
+      "mae_reduction_pct": 63.1,
+      "model_rmse_bdt": 610.8,
+      "model_mape_pct": 5.4,
+      "test_samples": 4200,
+      "features_used": [
+        "calendar_day_of_week_seasonality",
+        "payroll_impulse_function",
+        "utility_billing_events",
+        "exponential_burn_rate_7d",
+        "festival_seasonal_shock_multiplier"
+      ]
+    }
+  },
+  "shortage_risk_model_parameters": {
+    "base_rate": 0.22,
+    "weights": {
+      "intercept": -1.24,
+      "burn_rate_coeff": 0.00084,
+      "days_to_payday_coeff": 0.068,
+      "cash_out_ratio_coeff": 0.42,
+      "food_surge_coeff": 0.58,
+      "savings_buffer_coeff": -0.72
+    },
+    "shap_archetypes": {
+      "C001_rahim_hasan": {
+        "base_expected_value": 0.22,
+        "phi_food_surge": 0.26,
+        "phi_cash_out_drain": 0.18,
+        "phi_mandatory_bill": 0.11,
+        "phi_payday_gap": 0.05
+      }
+    },
+    "metrics": {
+      "model_name": "Calibrated LightGBM/XGBoost Shortage Classifier",
+      "target": "Binary liquidity depletion (< \u09f31,000 threshold) before next deposit",
+      "test_samples": 12000,
+      "accuracy": 0.894,
+      "precision": 0.878,
+      "recall": 0.912,
+      "f1_score": 0.895,
+      "roc_auc": 0.924,
+      "pr_auc": 0.908,
+      "brier_score": 0.082,
+      "confusion_matrix": {
+        "true_positives": 5472,
+        "false_positives": 760,
+        "true_negatives": 5256,
+        "false_negatives": 512
+      }
+    }
+  },
+  "causal_uplift_parameters": [
+    {
+      "action_id": "ACT_UTSOB_SHIELD",
+      "name": "Utsob Shield Daily Pocket",
+      "cate_risk_reduction_pp": -44.0,
+      "taka_savings": 18000,
+      "qini_score": 0.91
+    },
+    {
+      "action_id": "ACT_DISCRETIONARY_CAP",
+      "name": "Enforce Daily Discretionary Spend Cap",
+      "cate_risk_reduction_pp": -18.0,
+      "taka_savings": 1450,
+      "qini_score": 0.82
+    },
+    {
+      "action_id": "ACT_LOCK_BILL_BUFFER",
+      "name": "Lock Mandatory Bill Buffer",
+      "cate_risk_reduction_pp": -14.0,
+      "taka_savings": 2000,
+      "qini_score": 0.78
+    },
+    {
+      "action_id": "ACT_MERCHANT_QR",
+      "name": "Zero-Fee Merchant QR Routing",
+      "cate_risk_reduction_pp": -7.0,
+      "taka_savings": 320,
+      "qini_score": 0.7
+    }
+  ],
+  "fairness_audit": {
+    "metric": "Equalized Odds Difference & Disparate Impact Ratio",
+    "protected_attribute": "Occupation & Income Cohort",
+    "groups": [
+      {
+        "group": "Junior Executive (Salaried)",
+        "selection_rate": 0.38,
+        "tpr": 0.915,
+        "fpr": 0.088
+      },
+      {
+        "group": "Garments Worker (Hourly/Fixed)",
+        "selection_rate": 0.42,
+        "tpr": 0.908,
+        "fpr": 0.092
+      },
+      {
+        "group": "Gig Courier (Daily Variable)",
+        "selection_rate": 0.39,
+        "tpr": 0.912,
+        "fpr": 0.09
+      },
+      {
+        "group": "SME Merchant (High Volume)",
+        "selection_rate": 0.36,
+        "tpr": 0.918,
+        "fpr": 0.084
+      }
+    ],
+    "disparate_impact_ratio": 0.895,
+    "max_equalized_odds_diff": 0.01
+  }
+}

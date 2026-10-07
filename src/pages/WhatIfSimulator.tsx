@@ -6,6 +6,10 @@ import {
   RotateCcw,
   Sparkles,
   Info,
+  Wheat,
+  ShieldCheck,
+  Calendar,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -16,11 +20,18 @@ import {
   Tooltip,
   Legend,
   ReferenceLine,
+  BarChart,
+  Bar,
 } from 'recharts';
 import { useFinancial } from '../context/FinancialContext';
 import { useNotification } from '../context/NotificationContext';
 import { saveSimulationToFirebase } from '../services/firebaseSync';
 import { runWhatIfSimulation } from '../services/simulationEngine';
+import {
+  calculateShekorVaultPlan,
+  generateShekor12MonthSimulation,
+  BENCHMARK_SHEKOR_PROFILES,
+} from '../services/shekorEngine';
 import { SimulationParams } from '../types/financial';
 
 export const WhatIfSimulator: React.FC = () => {
@@ -36,6 +47,25 @@ export const WhatIfSimulator: React.FC = () => {
     unexpectedExpense: 0,
     cashOutReductionPct: 10,
   });
+
+  // 'শেকড়' (Shekor) Seasonal Income Equalizer State
+  const [shekorInflow, setShekorInflow] = useState<number>(150000);
+  const [shekorObligations, setShekorObligations] = useState<number>(18000);
+  const [shekorBufferRatio, setShekorBufferRatio] = useState<number>(0.10);
+  const [isShekorVaultActive, setIsShekorVaultActive] = useState<boolean>(true);
+
+  const shekorPlan = useMemo(() => {
+    return calculateShekorVaultPlan(shekorInflow, shekorObligations, shekorBufferRatio);
+  }, [shekorInflow, shekorObligations, shekorBufferRatio]);
+
+  const shekorSimulation = useMemo(() => {
+    return generateShekor12MonthSimulation(
+      shekorInflow,
+      isShekorVaultActive,
+      shekorBufferRatio,
+      shekorObligations
+    );
+  }, [shekorInflow, isShekorVaultActive, shekorBufferRatio, shekorObligations]);
 
   const simulation = useMemo(() => {
     return runWhatIfSimulation(profile, params);
@@ -133,6 +163,35 @@ export const WhatIfSimulator: React.FC = () => {
         unexpectedExpense: 0,
         cashOutReductionPct: 0,
       });
+    } else if (presetName === 'samityBuffer') {
+      setParams({
+        foodReductionPct: 5,
+        shoppingReductionPct: 5,
+        monthlySavingsDelta: 1000,
+        additionalIncome: 3000,
+        unexpectedExpense: 0,
+        cashOutReductionPct: 10,
+      });
+    } else if (presetName === 'salaryDelay') {
+      setParams({
+        foodReductionPct: 0,
+        shoppingReductionPct: 0,
+        monthlySavingsDelta: 0,
+        additionalIncome: 0,
+        unexpectedExpense: 4200,
+        cashOutReductionPct: 0,
+      });
+    } else if (presetName === 'shekorEqualizer') {
+      // 'শেকড়' (Shekor) Seasonal Income Equalizer
+      // Smooths harvest surplus into steady float (+৳2,275/week) with 0% cash-out fee QR optimization
+      setParams({
+        foodReductionPct: 10,
+        shoppingReductionPct: 10,
+        monthlySavingsDelta: 2000,
+        additionalIncome: 9100, // Monthly salary from UCB Micro-Vault
+        unexpectedExpense: 0,
+        cashOutReductionPct: 20,
+      });
     }
 
     notifyFinancial(
@@ -206,6 +265,24 @@ export const WhatIfSimulator: React.FC = () => {
           className="px-3.5 py-1.5 rounded-full bg-white hover:bg-blue-50 border border-[var(--line)] hover:border-blue-300 text-blue-900 text-[12.5px] font-bold whitespace-nowrap cursor-pointer transition-colors shadow-2xs"
         >
           ✨ অতিরিক্ত ৬,০০০ টাকা আয়
+        </button>
+        <button
+          onClick={() => applyPreset('samityBuffer')}
+          className="px-3.5 py-1.5 rounded-full bg-white hover:bg-purple-50 border border-[var(--line)] hover:border-purple-300 text-purple-900 text-[12.5px] font-bold whitespace-nowrap cursor-pointer transition-colors shadow-2xs"
+        >
+          🤝 সমিতি বা রোসা বাফার (+৳৩,০০০)
+        </button>
+        <button
+          onClick={() => applyPreset('salaryDelay')}
+          className="px-3.5 py-1.5 rounded-full bg-white hover:bg-rose-50 border border-[var(--line)] hover:border-rose-300 text-rose-800 text-[12.5px] font-bold whitespace-nowrap cursor-pointer transition-colors shadow-2xs"
+        >
+          ⏳ বেতন ৭ দিন দেরির স্ট্রেস টেস্ট
+        </button>
+        <button
+          onClick={() => applyPreset('shekorEqualizer')}
+          className="px-3.5 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-950 text-[12.5px] font-bold whitespace-nowrap cursor-pointer transition-colors shadow-2xs"
+        >
+          🌾 ‘শেকড়’ সিজনাল সমতাকরণ (+৳৯,১০০ মাসিক ভাতা)
         </button>
       </div>
 
@@ -482,6 +559,262 @@ export const WhatIfSimulator: React.FC = () => {
           <div className="p-3.5 rounded-[14px] bg-[var(--bg)] border border-[var(--line)] text-caption text-[var(--muted)] flex items-center gap-2 font-medium">
             <Info className="w-4 h-4 text-[var(--navy)] shrink-0" />
             <span>সব ফলাফল বাস্তব সময়ে গাণিতিক মডেলের মাধ্যমে গণনা করা হচ্ছে।</span>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          FEATURE: 'শেকড়' (Shekor) Seasonal Income Equalizer & UCB Micro-Vault
+          Full interactive seasonal income equalizer for farmers, fishermen & gig workers
+         ========================================================================= */}
+      <div className="upay-card p-6 sm:p-8 space-y-6 border-amber-300 bg-gradient-to-b from-amber-50/50 via-white to-white shadow-md">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-amber-200/80 pb-5">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-slate-950 font-heading font-extrabold text-[12px] shadow-2xs">
+                <Wheat className="w-3.5 h-3.5 text-slate-950" />
+                <span>{lang === 'bn' ? 'ট্র্যাক ০৩ বিশেষ উদ্ভাবন · ‘শেকড়’ (Shekor)' : 'Track 03 Feature • Shekor Equalizer'}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11.5px] font-bold border border-emerald-300">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>{lang === 'bn' ? 'ইউসিবি মাইক্রো-ভল্ট (৭.২৫% বার্ষিক মুনাফা)' : 'UCB Micro-Vault (7.25% p.a.)'}</span>
+              </span>
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-[var(--navy)] mt-2">
+              {lang === 'bn' ? '‘শেকড়’: অনিয়মিত ও সিজনাল আয়ের স্বয়ংক্রিয় সমতাকরণ' : '‘Shekor’: Seasonal Harvest Income Equalizer & Vault'}
+            </h2>
+            <p className="text-[13.5px] text-[var(--muted)] max-w-3xl mt-1 leading-relaxed">
+              {lang === 'bn'
+                ? 'বাংলাদেশের কৃষক, জেলে ও সিজনাল কর্মীদের প্রধান সংকট হলো বছরে ২-৩ মাস বাম্পার আয় (যেমন: ৳১,৫০,০০০), আর বাকি ৪-৫ মাস (মঙ্গা ও অফ-সিজনে) হাত খালি থাকা। ‘শেকড়’ এই এককালীন অর্থকে ইউসিবি মাইক্রো-ভল্টে রেখে ৩৬৫ দিনের স্বয়ংক্রিয় সাপ্তাহিক বেতনে রূপান্তর করে।'
+                : 'Solves the boom-and-bust cycle for farmers, fishermen, and seasonal gig-workers by smoothing lump-sum harvests into predictable weekly salaries in a high-yield UCB micro-vault.'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-start lg:self-center">
+            <button
+              onClick={() => setIsShekorVaultActive(!isShekorVaultActive)}
+              className={`px-4 py-2.5 rounded-xl font-heading font-bold text-[13.5px] transition-all flex items-center gap-2 shadow-xs cursor-pointer ${
+                isShekorVaultActive
+                  ? 'bg-emerald-600 text-white shadow-emerald-600/20'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{isShekorVaultActive ? (lang === 'bn' ? 'ভল্ট সক্রিয় (মঙ্গা মুক্ত)' : 'Vault Active') : (lang === 'bn' ? 'ভল্ট নিষ্ক্রিয়' : 'Vault Inactive')}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Core Pillars of Shekor */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-1">
+            <span className="text-[12px] font-semibold text-amber-900">
+              {lang === 'bn' ? '১. ফসল তোলার এককালীন আয়' : '1. Annual Harvest Inflow'}
+            </span>
+            <p className="font-heading font-extrabold text-2xl text-[var(--navy)]">
+              {formatMoney(shekorPlan.annualInflow)}
+            </p>
+            <p className="text-[11px] text-amber-800">
+              {lang === 'bn' ? 'বোরো ও আমন মৌসুমের আয়' : 'Boro & Aman Harvest Deposit'}
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200 space-y-1">
+            <span className="text-[12px] font-semibold text-blue-900">
+              {lang === 'bn' ? '২. ভার্চুয়াল দৈনিক ভাতা (VDA)' : '2. Virtual Daily Allowance (VDA)'}
+            </span>
+            <p className="font-heading font-extrabold text-2xl text-blue-950">
+              {formatMoney(shekorPlan.virtualDailyAllowance)}
+              <span className="text-[13px] font-normal text-blue-800"> /দিন</span>
+            </p>
+            <p className="text-[11px] text-blue-800 font-mono">
+              VDA = (মোট আয় - স্থায়ী খরচ) ÷ ৩৬৫ × ৯০%
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-1">
+            <span className="text-[12px] font-semibold text-emerald-900">
+              {lang === 'bn' ? '৩. রবিবার সাপ্তাহিক বেতন' : '3. Weekly Sunday Payout'}
+            </span>
+            <p className="font-heading font-extrabold text-2xl text-emerald-700">
+              {formatMoney(shekorPlan.weeklySundaySalary)}
+              <span className="text-[13px] font-normal text-emerald-600"> /সপ্তাহ</span>
+            </p>
+            <p className="text-[11px] text-emerald-700">
+              {lang === 'bn' ? 'সরাসরি মূল ওয়ালেটে জমা' : 'Auto-credited every Sunday'}
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-purple-50/80 border border-purple-200 space-y-1">
+            <span className="text-[12px] font-semibold text-purple-900">
+              {lang === 'bn' ? '৪. বার্ষিক অর্জিত সুদ' : '4. Micro-Vault Yield (7.25%)'}
+            </span>
+            <p className="font-heading font-extrabold text-2xl text-purple-950">
+              +{formatMoney(shekorPlan.projectedAnnualYield)}
+            </p>
+            <p className="text-[11px] text-purple-800">
+              {lang === 'bn' ? 'UCB সেভিংস ব্যালেন্সে মুনাফা' : 'UCB accrued interest'}
+            </p>
+          </div>
+        </div>
+
+        {/* Interactive Sliders for Customizing Farmer Plan */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-[13.5px]">
+              <span className="font-bold text-[var(--navy)]">{lang === 'bn' ? 'এককালীন ফসল বিক্রয়ের আয়:' : 'Harvest Inflow:'}</span>
+              <span className="font-extrabold text-amber-900">{formatMoney(shekorInflow)}</span>
+            </div>
+            <input
+              type="range"
+              min="80000"
+              max="300000"
+              step="10000"
+              value={shekorInflow}
+              onChange={(e) => setShekorInflow(Number(e.target.value))}
+              className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-amber-600"
+            />
+            <div className="flex justify-between text-[11px] text-[var(--muted)]">
+              <span>৳৮০,০০০</span>
+              <span>৳১,৫০,০০০</span>
+              <span>৳৩,০০,০০০</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-[13.5px]">
+              <span className="font-bold text-[var(--navy)]">{lang === 'bn' ? 'বাৎসরিক স্থায়ী ঋণ/ডিপিএস:' : 'Fixed Annual Obligations:'}</span>
+              <span className="font-extrabold text-rose-800">{formatMoney(shekorObligations)}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="50000"
+              step="2000"
+              value={shekorObligations}
+              onChange={(e) => setShekorObligations(Number(e.target.value))}
+              className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-rose-600"
+            />
+            <div className="flex justify-between text-[11px] text-[var(--muted)]">
+              <span>৳০</span>
+              <span>৳১৮,০০০</span>
+              <span>৳৫০,০০০</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-[13.5px]">
+              <span className="font-bold text-[var(--navy)]">{lang === 'bn' ? 'জরুরি সেফটি ফান্ড অনুপাত:' : 'Emergency Buffer Ratio:'}</span>
+              <span className="font-extrabold text-emerald-700">{Math.round(shekorBufferRatio * 100)}% ({formatMoney(shekorPlan.bufferAmount)})</span>
+            </div>
+            <input
+              type="range"
+              min="0.05"
+              max="0.25"
+              step="0.01"
+              value={shekorBufferRatio}
+              onChange={(e) => setShekorBufferRatio(Number(e.target.value))}
+              className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600"
+            />
+            <div className="flex justify-between text-[11px] text-[var(--muted)]">
+              <span>৫%</span>
+              <span>১০% (স্ট্যান্ডার্ড)</span>
+              <span>২৫%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 12-Month Monga Season Contrast Simulation Graph */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-[13px] flex-wrap gap-2">
+            <div>
+              <h3 className="font-heading font-extrabold text-[17px] text-[var(--navy)]">
+                {lang === 'bn' ? '১২ মাসের ক্যাশ-ফ্লো: প্রচলিত সংকট বনাম ‘শেকড়’ সুরক্ষা' : '12-Month Trajectory: Traditional Deficit vs Shekor Vault'}
+              </h3>
+              <p className="text-[12.5px] text-[var(--muted)]">
+                {lang === 'bn'
+                  ? 'লাল রেখাটি দেখায় কীভাবে ৫ম-৬ষ্ঠ মাসে (আশ্বিন/কার্তিক - মঙ্গা মৌসুমে) প্রচলিতভাবে টাকা শূন্যে নেমে ঋণগ্রস্ত হতে হয়। নীল/সবুজ রেখাটি ‘শেকড়’-এর স্থায়ী স্থিতিশীলতা।'
+                  : 'Notice how unmanaged cash crashes into severe debt during Monga season (Months 5-6), whereas Shekor ensures 12 months of steady float.'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5 text-rose-700 font-bold text-[12px]">
+                <span className="w-3 h-1 bg-rose-500 rounded-full inline-block" />
+                <span>{lang === 'bn' ? 'প্রচলিত ধারায় (৫ম মাসে মঙ্গা সংকট)' : 'Unmanaged (Monga Deficit)'}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-emerald-700 font-bold text-[12px]">
+                <span className="w-3 h-1 bg-emerald-600 rounded-full inline-block" />
+                <span>{lang === 'bn' ? '‘শেকড়’ সমতাকৃত ওয়ালেট' : 'Shekor Managed Float'}</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="h-72 w-full bg-slate-50 p-2 rounded-2xl border border-slate-200">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={shekorSimulation.points}
+                margin={{ top: 15, right: 15, left: -5, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                <XAxis
+                  dataKey="monthNameBn"
+                  tick={{ fontSize: 11, fill: '#64748B' }}
+                  interval={0}
+                  angle={-18}
+                  textAnchor="end"
+                  height={50}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: '#64748B' }}
+                  tickFormatter={(v) => `৳${toBengaliNumber(Math.round(v / 1000))}k`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                  }}
+                  formatter={(val: any, name: any) => [formatMoney(Number(val)), name]}
+                />
+                <ReferenceLine
+                  y={0}
+                  stroke="#E5484D"
+                  strokeWidth={1.5}
+                  label={{ value: 'শূন্য ব্যালেন্স / ঋণ অঞ্চল', fill: '#E5484D', fontSize: 11, position: 'insideTopLeft' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="unmanagedBalance"
+                  name={lang === 'bn' ? 'প্রচলিত ব্যালেন্স' : 'Unmanaged'}
+                  stroke="#E5484D"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="shekorManagedBalance"
+                  name={lang === 'bn' ? '‘শেকড়’ ওয়ালেট ব্যালেন্স' : 'Shekor Float'}
+                  stroke="#059669"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#FFC20E', stroke: '#059669' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Callout on Monga Elimination */}
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+            <div className="text-[13px] text-emerald-950 leading-relaxed">
+              <strong>{lang === 'bn' ? '‘শেকড়’ সামাজিক ও অর্থনৈতিক বিপ্লব:' : 'Economic & Social Impact:'}</strong>{' '}
+              {lang === 'bn'
+                ? `এই মডেলে কৃষককে মঙ্গা মৌসুমে চড়া সুদে (১০-১৫% মাসিক) মহাজন থেকে ঋণ নিতে হয় না। সারা বছরে মোট ${formatMoney(shekorSimulation.mongaDeficitPrevented)} টাকার মহাজনি ঋণ ঝুঁকি স্থায়ীভাবে দূর করা হয়েছে এবং ভল্টে সঞ্চিত উদ্বৃত্তে অতিরিক্ত ${formatMoney(shekorPlan.projectedAnnualYield)} টাকা সুদ অর্জিত হয়েছে।`
+                : `Permanently eliminates seasonal predatory micro-debt while accumulating ${formatMoney(shekorPlan.projectedAnnualYield)} in interest dividends.`}
+            </div>
           </div>
         </div>
       </div>

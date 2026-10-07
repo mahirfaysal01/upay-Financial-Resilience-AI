@@ -58,7 +58,7 @@ export function runWhatIfSimulation(
   let simulatedRisk = before.shortageRisk;
 
   if (netCashFlowDelta > 0) {
-    const riskReductionFraction = Math.min(0.65, (netCashFlowDelta / 4500) * 0.45);
+    const riskReductionFraction = Math.min(0.65, (netCashFlowDelta / 2275) * 0.44);
     simulatedRisk = Math.max(0.06, before.shortageRisk - riskReductionFraction);
   } else if (netCashFlowDelta < 0) {
     const riskIncreaseFraction = Math.min(0.4, (Math.abs(netCashFlowDelta) / 4000) * 0.3);

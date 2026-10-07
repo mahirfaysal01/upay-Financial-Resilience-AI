@@ -10,6 +10,8 @@ import {
   SavingsGoal,
   UtsobShieldProfile,
   QurbaniSharePlan,
+  ShekorProfile,
+  ShekorVaultPlan,
 } from '../types/financial';
 import { SYNTHETIC_CUSTOMERS } from '../data/syntheticData';
 import {
@@ -25,6 +27,10 @@ import {
   getCustomerUtsobProfile,
   getDefaultQurbaniPlan,
 } from '../services/utsobShieldEngine';
+import {
+  calculateShekorVaultPlan,
+  BENCHMARK_SHEKOR_PROFILES,
+} from '../services/shekorEngine';
 import { Language, translations, formatCurrency } from '../utils/translations';
 import {
   subscribeToFirebaseGoals,
@@ -80,6 +86,19 @@ interface FinancialContextType {
   utsobProfile: UtsobShieldProfile;
   qurbaniPlan: QurbaniSharePlan;
   updateQurbaniPlan: (plan: Partial<QurbaniSharePlan>) => void;
+
+  // 'Shekor' (শেকড়) — Seasonal Income Equalizer & Micro-Vault
+  isShekorVaultActive: boolean;
+  toggleShekorVault: () => void;
+  shekorInflowAmount: number;
+  setShekorInflowAmount: (val: number) => void;
+  shekorBufferRatio: number;
+  setShekorBufferRatio: (val: number) => void;
+  shekorFixedObligations: number;
+  setShekorFixedObligations: (val: number) => void;
+  shekorPlan: ShekorVaultPlan;
+  withdrawShekorVault: () => void;
+  activeShekorProfile?: ShekorProfile;
 }
 
 const FinancialContext = createContext<FinancialContextType | undefined>(undefined);
@@ -106,10 +125,10 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isEmergencyBufferActive, setIsEmergencyBufferActive] = useState(false);
   const [isMerchantQrOptimized, setIsMerchantQrOptimized] = useState(false);
 
-  // Utsob Shield State (Eid & Festival Shock Absorber)
+  // Utsob Shield State (Durga Puja & Eid Festival Shock Absorber)
   const [isUtsobShieldActive, setIsUtsobShieldActive] = useState(false);
   const [utsobSavedAmount, setUtsobSavedAmount] = useState(3780);
-  const [selectedFestivalId, setSelectedFestivalId] = useState('eid-ul-fitr-2027');
+  const [selectedFestivalId, setSelectedFestivalId] = useState('durga-puja-2026');
   const [qurbaniPlan, setQurbaniPlan] = useState<QurbaniSharePlan>(() => getDefaultQurbaniPlan());
 
   const [customGoals, setCustomGoals] = useState<Record<string, SavingsGoal[]>>({});

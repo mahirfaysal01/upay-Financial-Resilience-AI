@@ -66,7 +66,8 @@ export const UtsobShield: React.FC = () => {
   const forecast90 = calculateUtsob90DayForecast(
     profile,
     isUtsobShieldActive,
-    utsobSavedAmount
+    utsobSavedAmount,
+    selectedFestivalId
   );
 
   const chartData = forecast90.projections.map((p) => ({
@@ -194,7 +195,7 @@ export const UtsobShield: React.FC = () => {
                     : 'bg-white/80 hover:bg-white text-[var(--navy)] border border-slate-200'
                 }`}
               >
-                <span>{fest.season === 'EID_UL_FITR' ? '🌙' : fest.season === 'EID_UL_ADHA' ? '🐄' : fest.season === 'POHELA_BOISHAKH' ? '🌺' : '🎓'}</span>
+                <span>{fest.season === 'DURGA_PUJA' ? '🪔' : fest.season === 'EID_UL_FITR' ? '🌙' : fest.season === 'EID_UL_ADHA' ? '🐄' : fest.season === 'POHELA_BOISHAKH' ? '🌺' : '🎓'}</span>
                 <span>{lang === 'bn' ? fest.nameBn : fest.name}</span>
                 <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 text-slate-600'}`}>
                   {lang === 'bn' ? `${fest.daysAhead} দিন বাকি` : `${fest.daysAhead}d ahead`}
@@ -239,15 +240,21 @@ export const UtsobShield: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 text-[12px] font-bold">
-                  {lang === 'bn' ? '৬০-সেকেন্ড লাইভ ডেমো · লাল ঈদ ভ্যালি' : '60-Second Demo • The Red Eid Valley'}
+                  {lang === 'bn'
+                    ? `৬০-সেকেন্ড লাইভ ডেমো · লাল ${activeFestival.season === 'DURGA_PUJA' ? 'পূজা' : 'উৎসব'} ভ্যালি`
+                    : `60-Second Demo • The Red ${activeFestival.season === 'DURGA_PUJA' ? 'Puja' : 'Festival'} Valley`}
                 </div>
                 <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-[var(--navy)] mt-1.5">
-                  {lang === 'bn' ? '৯০ দিনের ক্যাশ-ফ্লো ও ঈদ শক সিমুলেশন' : '90-Day Cash-Flow & Festival Shock Simulation'}
+                  {lang === 'bn'
+                    ? `৯০ দিনের ক্যাশ-ফ্লো ও ${activeFestival.nameBn} শক সিমুলেশন`
+                    : `90-Day Cash-Flow & ${activeFestival.name} Shock Simulation`}
                 </h2>
                 <p className="text-[13.5px] text-[var(--muted)] mt-0.5">
                   {lang === 'bn'
-                    ? 'নিচে লক্ষ্য করুন: মার্চ মাসে ঈদের কেনাকাটা ও ট্রেনের টিকিটের কারণে লাল ভ্যালি কীভাবে শূন্যের নিচে নেমে যাচ্ছে।'
-                    : 'Observe the deep red valley in March dipping below zero due to Eid shopping and advance train tickets.'}
+                    ? activeFestival.season === 'DURGA_PUJA'
+                      ? 'নিচে লক্ষ্য করুন: অক্টোবর মাসে দুর্গাপূজার কেনাকাটা, মণ্ডপ দর্শন ও চাঁদার কারণে উৎসব ভ্যালি কীভাবে শূন্যের নিচে নেমে যাচ্ছে।'
+                      : 'নিচে লক্ষ্য করুন: উৎসবের কেনাকাটা ও অগ্রিম খরচের কারণে লাল ভ্যালি কীভাবে শূন্যের নিচে নেমে যাচ্ছে।'
+                    : `Observe the deep red valley dipping below zero due to ${activeFestival.name} advance expenses and shopping.`}
                 </p>
               </div>
 
@@ -445,12 +452,14 @@ export const UtsobShield: React.FC = () => {
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
                     <h4 className="font-heading font-bold text-emerald-950 text-[14px]">
-                      {lang === 'bn' ? 'উৎসবের লাল ভ্যালি পুরোপুরি সমতল করা হয়েছে!' : 'The Red Eid Valley is Completely Flattened!'}
+                      {lang === 'bn'
+                        ? `${activeFestival.season === 'DURGA_PUJA' ? 'দুর্গাপূজার' : 'উৎসবের'} লাল ভ্যালি পুরোপুরি সমতল করা হয়েছে!`
+                        : `The Red ${activeFestival.name} Valley is Completely Flattened!`}
                     </h4>
                     <p className="text-[13px] text-emerald-800 mt-0.5 leading-relaxed">
                       {lang === 'bn'
-                        ? `আজ থেকে মাত্র ${formatMoney(utsobProfile.dailyPocketAmount)}/দিন আলাদা হয়ে উৎসব পকেটে জমা হচ্ছে। ফলে ঈদের কেনাকাটা ও ভ্রমণের সময় মূল অ্যাকাউন্ট ১,০০০ টাকার নিরাপদ সীমার ওপরেই থাকবে।`
-                        : `By accumulating ${formatMoney(utsobProfile.dailyPocketAmount)}/day starting today, your wallet liquidity remains above safety threshold throughout the entire festival.`}
+                        ? `আজ থেকে মাত্র ${formatMoney(utsobProfile.dailyPocketAmount)}/দিন আলাদা হয়ে উৎসব পকেটে জমা হচ্ছে। ফলে ${activeFestival.nameBn}-র উৎসবকালে মূল অ্যাকাউন্ট ১,০০০ টাকার নিরাপদ সীমার ওপরেই থাকবে।`
+                        : `By accumulating ${formatMoney(utsobProfile.dailyPocketAmount)}/day starting today, your wallet liquidity remains above safety threshold throughout ${activeFestival.name}.`}
                     </p>
                   </div>
                 </div>
@@ -459,12 +468,14 @@ export const UtsobShield: React.FC = () => {
                   <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                   <div>
                     <h4 className="font-heading font-bold text-red-950 text-[14px]">
-                      {lang === 'bn' ? 'সতর্কতা: মার্চ মাসে গভীর ঈদ ভ্যালি ও ঘাটতি দৃশ্যমান' : 'Warning: Deep Eid Valley & Post-Festival Deficit Detected'}
+                      {lang === 'bn'
+                        ? `সতর্কতা: ${activeFestival.season === 'DURGA_PUJA' ? 'অক্টোবরে শারদীয় দুর্গাপূজা' : 'আসন্ন উৎসব'} উপলক্ষে গভীর ঘাটতি দৃশ্যমান`
+                        : `Warning: Deep Deficit Valley Detected Ahead of ${activeFestival.name}`}
                     </h4>
                     <p className="text-[13px] text-red-800 mt-0.5 leading-relaxed">
                       {lang === 'bn'
-                        ? `বোনাস ঈদের ৪ দিন আগে আসার কারণে ঈদের কেনাকাটা ও ট্রেনের টিকিট কাটার সময় আপনার ব্যালেন্স ঋণাত্মক অঞ্চলে পৌঁছাবে। উপরের বাটনে চাপ দিয়ে 'উৎসব শিল্ড' সক্রিয় করুন।`
-                        : `Because festival bonus arrives only 4 days before Eid, advance shopping and travel cause you to start next month in deficit. Tap 'Start Shield' above to eliminate this.`}
+                        ? `উৎসবের খরচ ও কেনাকাটার চাপ বোনাস পৌঁছানোর আগেই তৈরি হওয়ায় আপনার ব্যালেন্স ঋণাত্মক অঞ্চলে পৌঁছাবে। উপরের বাটনে চাপ দিয়ে 'উৎসব শিল্ড' সক্রিয় করুন।`
+                        : `Because festival spending surges before liquidity arrives, your balance dips into the red. Tap 'Start Shield' above to eliminate this.`}
                     </p>
                   </div>
                 </div>
@@ -479,84 +490,164 @@ export const UtsobShield: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-amber-600" />
                 <h3 className="font-heading font-extrabold text-[18px] text-[var(--navy)]">
-                  {lang === 'bn' ? 'ফারহানের কেস স্টাডি ও "বোনাস টাইমিং ফাঁদ"' : 'The Bonus Timing Trap: Why Eid Creates Debt'}
+                  {lang === 'bn'
+                    ? (activeFestival.season === 'DURGA_PUJA' ? 'শারদীয় দুর্গোৎসব ও "বোনাস টাইমিং ফাঁদ"' : 'ফারহানের কেস স্টাডি ও "বোনাস টাইমিং ফাঁদ"')
+                    : (activeFestival.season === 'DURGA_PUJA' ? 'Durga Puja & The Bonus Timing Trap' : 'The Bonus Timing Trap: Why Festivals Create Debt')}
                 </h3>
               </div>
               <p className="text-[13.5px] text-[var(--muted)] leading-relaxed">
                 {lang === 'bn'
-                  ? 'বাংলাদেশে ৯২% চাকুরিজীবীর বোনাস ঈদের ৩-৪ দিন আগে আসে। অথচ শপিং ও ট্রেনের অগ্রিম টিকিট কাটতে হয় ২০ দিন আগে। ফলে মানুষ ক্রেডিট কার্ড বা আত্মীয়দের চড়া ঋণে জড়িয়ে পড়ে।'
-                  : '92% of salaried individuals receive bonus 3–4 days before Eid, but advance shopping and train tickets must be paid 20 days prior, forcing costly borrowing.'}
+                  ? (activeFestival.season === 'DURGA_PUJA'
+                    ? 'দুর্গাপূজার নতুন পোশাক ও মণ্ডপ প্রস্তুতি ৭-১০ দিন আগে শুরু হলেও পূজা বোনাস আসে মাত্র ২-৩ দিন আগে। ফলে মানুষ বাধ্য হয়ে চড়া সুদে ঋণ বা ক্রেডিট কার্ডের ওপর নির্ভর করে।'
+                    : 'বাংলাদেশে ৯২% চাকুরিজীবীর বোনাস ঈদের ৩-৪ দিন আগে আসে। অথচ শপিং ও ট্রেনের অগ্রিম টিকিট কাটতে হয় ২০ দিন আগে। ফলে মানুষ ক্রেডিট কার্ড বা আত্মীয়দের চড়া ঋণে জড়িয়ে পড়ে।')
+                  : (activeFestival.season === 'DURGA_PUJA'
+                    ? 'Puja attire and mandap preparations start 7-10 days earlier, but festival bonuses arrive merely 2-3 days prior, forcing costly short-term credit.'
+                    : '92% of salaried individuals receive bonus 3–4 days before festivals, but advance shopping must be paid weeks prior, forcing costly borrowing.')}
               </p>
 
               {/* Step Timeline */}
               <div className="space-y-3 pt-2">
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                    -২২দ
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[13.5px] text-[var(--navy)]">
-                        {lang === 'bn' ? 'পোশাক ও পারিবারিক শপিং' : 'Eid Shopping & Attire'}
-                      </span>
-                      <span className="text-[12px] font-bold text-red-600">{formatMoney(8500)}</span>
+                {activeFestival.season === 'DURGA_PUJA' ? (
+                  <>
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                      <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                        -৭দ
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13.5px] text-[var(--navy)]">
+                            {lang === 'bn' ? 'পূজার নতুন পোশাক ও পারিবারিক শপিং' : 'Puja Clothing & Shopping'}
+                          </span>
+                          <span className="text-[12px] font-bold text-red-600">{formatMoney(6500)}</span>
+                        </div>
+                        <p className="text-[12px] text-[var(--muted)] mt-0.5">
+                          {lang === 'bn' ? 'মহাসপ্তমীর আগেই কেনাকাটা শেষ করতে ক্রেডিট কার্ড ব্যবহার।' : 'Purchased on card before Maha Saptami.'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[12px] text-[var(--muted)] mt-0.5">
-                      {lang === 'bn' ? 'হাতে নগদ না থাকায় ক্রেডিট কার্ডে কেনাকাটা করা হয়।' : 'Purchased on credit because salary is not yet credited.'}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                    -১৫দ
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[13.5px] text-[var(--navy)]">
-                        {lang === 'bn' ? 'বাড়ি ফেরার অগ্রিম টিকিট' : 'Advance Travel Tickets'}
-                      </span>
-                      <span className="text-[12px] font-bold text-red-600">{formatMoney(3200)}</span>
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                      <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                        -৪দ
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13.5px] text-[var(--navy)]">
+                            {lang === 'bn' ? 'মণ্ডপ চাঁদা ও অঞ্জলি অনুদান' : 'Mandap Chada & Anjali'}
+                          </span>
+                          <span className="text-[12px] font-bold text-red-600">{formatMoney(3400)}</span>
+                        </div>
+                        <p className="text-[12px] text-[var(--muted)] mt-0.5">
+                          {lang === 'bn' ? 'পারিবারিক বা স্থানীয় পূজা মণ্ডপের অনুদান প্রদান।' : 'Community mandap contribution before festivities.'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[12px] text-[var(--muted)] mt-0.5">
-                      {lang === 'bn' ? 'অনলাইন ট্রেনের টিকিট বা বাসের টিকিট বুকিং।' : 'Railway or intercity bus bookings.'}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-300">
-                  <div className="w-7 h-7 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                    -৪দ
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[13.5px] text-amber-950">
-                        {lang === 'bn' ? 'বোনাস ক্রেডিট হয় (দেরি হয়ে গেছে!)' : 'Festival Bonus Arrives (Too Late!)'}
-                      </span>
-                      <span className="text-[12px] font-bold text-emerald-700">+{formatMoney(15000)}</span>
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-300">
+                      <div className="w-7 h-7 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                        -৩দ
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13.5px] text-amber-950">
+                            {lang === 'bn' ? 'পূজা বোনাস ক্রেডিট হয় (দেরি হয়ে গেছে!)' : 'Puja Bonus Arrives (Too Late!)'}
+                          </span>
+                          <span className="text-[12px] font-bold text-emerald-700">+{formatMoney(12000)}</span>
+                        </div>
+                        <p className="text-[12px] text-amber-900 mt-0.5">
+                          {lang === 'bn' ? 'বোনাস আসার আগেই ৯,৯০০ টাকা দেনা হয়ে গেছে।' : 'Already in ৳9,900 debt by the time bonus lands.'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[12px] text-amber-900 mt-0.5">
-                      {lang === 'bn' ? 'বোনাস আসার আগেই ১১,৭০০ টাকা দেনা হয়ে গেছে।' : 'Already in ৳11,700 credit debt by the time bonus lands.'}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
-                  <div className="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                    +১ম
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[13.5px] text-red-950">
-                        {lang === 'bn' ? 'পরবর্তী মাস শুরু হয় বিশাল ঘাটতিতে' : 'Next Month Starts in Severe Deficit'}
-                      </span>
-                      <span className="text-[12px] font-bold text-red-600">-{formatMoney(8200)}</span>
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
+                      <div className="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                        +১ম
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13.5px] text-red-950">
+                            {lang === 'bn' ? 'বিজয়ার মিষ্টি ও পরবর্তী মাস ঘাটতিতে শুরু' : 'Bijoya Sweets & Next Month Deficit'}
+                          </span>
+                          <span className="text-[12px] font-bold text-red-600">-{formatMoney(6200)}</span>
+                        </div>
+                        <p className="text-[12px] text-red-800 mt-0.5">
+                          {lang === 'bn' ? 'উৎসব শেষে মাস শুরু হয় ঋণাত্মক ব্যালেন্স দিয়ে।' : 'Starts next month with strained liquidity.'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[12px] text-red-800 mt-0.5">
-                      {lang === 'bn' ? 'ক্রেডিট কার্ডের বিল ও ঋণ পরিশোধে পরবর্তী মাসজুড়ে টানাপোড়েন।' : 'Struggles with credit repayments throughout the following month.'}
-                    </p>
-                  </div>
-                </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                      <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                        -২২দ
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13.5px] text-[var(--navy)]">
+                            {lang === 'bn' ? 'পোশাক ও পারিবারিক শপিং' : 'Eid Shopping & Attire'}
+                          </span>
+                          <span className="text-[12px] font-bold text-red-600">{formatMoney(8500)}</span>
+                        </div>
+                        <p className="text-[12px] text-[var(--muted)] mt-0.5">
+                          {lang === 'bn' ? 'হাতে নগদ না থাকায় ক্রেডিট কার্ডে কেনাকাটা করা হয়।' : 'Purchased on credit because salary is not yet credited.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                      <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                        -১৫দ
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13.5px] text-[var(--navy)]">
+                            {lang === 'bn' ? 'বাড়ি ফেরার অগ্রিম টিকিট' : 'Advance Travel Tickets'}
+                          </span>
+                          <span className="text-[12px] font-bold text-red-600">{formatMoney(3200)}</span>
+                        </div>
+                        <p className="text-[12px] text-[var(--muted)] mt-0.5">
+                          {lang === 'bn' ? 'অনলাইন ট্রেনের টিকিট বা বাসের টিকিট বুকিং।' : 'Railway or intercity bus bookings.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-300">
+                      <div className="w-7 h-7 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                        -৪দ
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13.5px] text-amber-950">
+                            {lang === 'bn' ? 'বোনাস ক্রেডিট হয় (দেরি হয়ে গেছে!)' : 'Festival Bonus Arrives (Too Late!)'}
+                          </span>
+                          <span className="text-[12px] font-bold text-emerald-700">+{formatMoney(15000)}</span>
+                        </div>
+                        <p className="text-[12px] text-amber-900 mt-0.5">
+                          {lang === 'bn' ? 'বোনাস আসার আগেই ১১,৭০০ টাকা দেনা হয়ে গেছে।' : 'Already in ৳11,700 credit debt by the time bonus lands.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
+                      <div className="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                        +১ম
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13.5px] text-red-950">
+                            {lang === 'bn' ? 'পরবর্তী মাস শুরু হয় বিশাল ঘাটতিতে' : 'Next Month Starts in Severe Deficit'}
+                          </span>
+                          <span className="text-[12px] font-bold text-red-600">-{formatMoney(8200)}</span>
+                        </div>
+                        <p className="text-[12px] text-red-800 mt-0.5">
+                          {lang === 'bn' ? 'ক্রেডিট কার্ডের বিল ও ঋণ পরিশোধে পরবর্তী মাসজুড়ে টানাপোড়েন।' : 'Struggles with credit repayments throughout the following month.'}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

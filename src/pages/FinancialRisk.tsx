@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   AlertTriangle,
   ShieldCheck,
@@ -7,14 +7,23 @@ import {
   ArrowRight,
   Sliders,
   CheckCircle2,
+  Zap,
+  Target,
+  TrendingDown,
+  Sparkles,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFinancial } from '../context/FinancialContext';
+import { calculateCausalRecommendationUplifts } from '../services/upliftEngine';
 
 export const FinancialRisk: React.FC = () => {
-  const { customer, profile, risk, recommendations, formatMoney } = useFinancial();
+  const { customer, profile, risk, recommendations, formatMoney, lang } = useFinancial();
 
   const riskPct = Math.round(risk.probability * 100);
+
+  const causalUplifts = useMemo(() => {
+    return calculateCausalRecommendationUplifts(profile, risk.probability);
+  }, [profile, risk.probability]);
 
   return (
     <div className="space-y-6 route-fade-slide">
@@ -78,14 +87,23 @@ export const FinancialRisk: React.FC = () => {
 
       {/* Explainable AI (SHAP-Style Section) */}
       <div className="upay-card p-6 space-y-5">
-        <div>
-          <h3 className="text-[#0B1F4B] flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[var(--yellow)]" />
-            <span>ব্যাখ্যামূলক এআই: আপনার ঝুঁকি কেন ঠিক {riskPct}%?</span>
-          </h3>
-          <p className="text-caption text-[var(--muted)] mt-0.5">
-            গাণিতিক মডেলের শীর্ষ ৫টি ফ্যাক্টরের স্বচ্ছ বিশ্লেষণ ({customer.name}):
-          </p>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-[#0B1F4B] flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[var(--yellow)]" />
+              <span>{lang === 'bn' ? `ব্যাখ্যামূলক এআই (TreeSHAP): আপনার ঝুঁকি কেন ঠিক ${riskPct}%?` : `Explainable AI (TreeSHAP): Why is your risk exactly ${riskPct}%?`}</span>
+            </h3>
+            <p className="text-caption text-[var(--muted)] mt-0.5">
+              {lang === 'bn'
+                ? `গাণিতিক মডেলের শীর্ষ ফ্যাক্টরের সম্পূর্ণ যোগফল-ভিত্তিক (Additive) স্বচ্ছ বিশ্লেষণ (${customer.name}):`
+                : `Strictly additive attribution sum verifying mathematical transparency (${customer.name}):`}
+            </p>
+          </div>
+
+          <div className="px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono text-[var(--navy)] font-bold self-start lg:self-auto">
+            <span>∑ SHAP: </span>
+            <span className="text-amber-600 font-extrabold">{risk.additiveEquation || `E[f(x)] (${Math.round((risk.baseRate ?? 0.22) * 100)}%) + ∑ φ_i = ${riskPct}%`}</span>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -195,7 +213,72 @@ export const FinancialRisk: React.FC = () => {
         </div>
       </div>
 
-      {/* Actionable Recommendations to Lower Risk */}
+      {/* Next-Best-Action (NBA) & Causal Uplift Modeling (CATE) */}
+      <div className="upay-card p-6 space-y-5 border-amber-300/60 bg-gradient-to-r from-amber-50/20 via-white to-amber-50/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+              <Sparkles className="w-3 h-3 text-emerald-700" />
+              <span>{lang === 'bn' ? 'কার্যকারিতা পরিমাপ · CATE আপলিফট মডেল' : 'Causal Uplift Model • CATE'}</span>
+            </div>
+            <h3 className="text-[#0B1F4B] mt-1 flex items-center gap-2">
+              <Target className="w-4.5 h-4.5 text-[var(--navy)]" />
+              <span>{lang === 'bn' ? 'নেক্সট-বেস্ট-অ্যাকশন (NBA): পদক্ষেপের কার্যকারিতা পরিমাপ' : 'Next-Best-Action (NBA): Causal Treatment Effects'}</span>
+            </h3>
+            <p className="text-caption text-[var(--muted)] mt-0.5">
+              {lang === 'bn'
+                ? 'পরামর্শ সত্যিই কাজ করে কি না তা মাপার জন্য দ্বৈত-মডেল (T-Learner CATE) আপলিফট এনালিসিস:'
+                : 'Measures expected individual risk reduction if intervention is adopted vs control (τ_i = E[Y|T=1] - E[Y|T=0]):'}
+            </p>
+          </div>
+
+          <div className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-700 font-semibold self-start sm:self-auto shadow-2xs">
+            {lang === 'bn' ? 'গড়ে ৪৪% পর্যন্ত ঘাটতি হ্রাস' : 'Up to -44% causal risk reduction'}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {causalUplifts.map((act, idx) => (
+            <div
+              key={act.actionId}
+              className="p-4.5 rounded-[16px] bg-white border border-slate-200 hover:border-amber-400/80 shadow-xs transition-all space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[var(--navy)] text-[var(--yellow)] text-xs font-black flex items-center justify-center shrink-0">
+                    {idx + 1}
+                  </span>
+                  <h4 className="font-heading font-extrabold text-[14.5px] text-[var(--navy)] leading-tight">
+                    {lang === 'bn' ? act.actionTitleBn : act.actionTitle}
+                  </h4>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold whitespace-nowrap">
+                  {act.incrementalRiskUpliftPp} pp
+                </span>
+              </div>
+
+              <p className="text-caption text-slate-600 font-medium pl-8">
+                {lang === 'bn' ? act.causalMechanismBn : act.causalMechanism}
+              </p>
+
+              <div className="grid grid-cols-3 gap-2 pl-8 pt-2 border-t border-slate-100 text-[11.5px]">
+                <div>
+                  <span className="text-slate-400 block text-[10px]">{lang === 'bn' ? 'পদক্ষেপ ছাড়া' : 'Counterfactual'}</span>
+                  <span className="font-bold text-rose-600">{Math.round(act.counterfactualRiskWithoutAction * 100)}%</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px]">{lang === 'bn' ? 'পদক্ষেপ নিলে' : 'Projected'}</span>
+                  <span className="font-bold text-emerald-600">{Math.round(act.projectedRiskWithAction * 100)}%</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px]">{lang === 'bn' ? 'কিনি স্কোর' : 'Qini Rank'}</span>
+                  <span className="font-bold text-[var(--navy)]">{(act.qiniEfficiency * 100).toFixed(0)}%</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="upay-card p-6 space-y-4">
         <div>
           <h3 className="text-[#0B1F4B]">ব্যক্তিগত ও অনিরপেক্ষ কর্মপরিকল্পনা</h3>

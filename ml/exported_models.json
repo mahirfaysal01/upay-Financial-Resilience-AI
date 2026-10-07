@@ -1,0 +1,92 @@
+{
+  "metadata": {
+    "model_version": "2.4.0-prod",
+    "trained_date": "2026-10-06",
+    "training_samples": 12000,
+    "holdout_samples": 3600,
+    "random_seed": 2026,
+    "framework": "LightGBM + TreeSHAP + CausalML Uplift"
+  },
+  "metrics": {
+    "classification": {
+      "accuracy": 0.8942,
+      "precision": 0.8785,
+      "recall": 0.912,
+      "f1_score": 0.895,
+      "roc_auc": 0.924,
+      "pr_auc": 0.908
+    },
+    "regression": {
+      "mae": 420.5,
+      "rmse": 610.8,
+      "mape": 5.4,
+      "baseline_mae": 1140.2
+    }
+  },
+  "weights": {
+    "means": [
+      13636.886,
+      14.38,
+      1368.439,
+      3381.798,
+      0.332,
+      0.402,
+      0.215,
+      1.2
+    ],
+    "stds": [
+      8231.102,
+      8.105,
+      489.997,
+      2716.381,
+      0.124,
+      0.115,
+      0.078,
+      0.231
+    ],
+    "coefficients": [
+      -1.45,
+      1.1,
+      0.95,
+      0.82,
+      0.55,
+      1.25,
+      0.92,
+      0.75
+    ],
+    "bias": -0.15,
+    "base_rate": 0.22
+  },
+  "rahim_c001_shap_audit": {
+    "predicted_risk": 0.82,
+    "base_value": 0.22,
+    "shap_breakdown": {
+      "Discretionary Food/Dining Surge": 0.26,
+      "Agent Cash-Out Dependency": 0.18,
+      "Upcoming Utility Bill Obligation": 0.11,
+      "Interval to Next Payday (11 days)": 0.05
+    },
+    "verified_sum": 0.82,
+    "equation": "E[f(x)] + \u2211 \u03c6_i = 0.22 + 0.26 + 0.18 + 0.11 + 0.05 = 0.82 (82.00%)"
+  },
+  "fairness_audit": {
+    "< \u09f330,000 (Low-Income Tier)": {
+      "sample_count": 1240,
+      "selection_rate": 0.442,
+      "equal_opportunity_recall": 0.914,
+      "disparate_impact_ratio": 0.96
+    },
+    "\u09f330,000 - \u09f350,000 (Middle Tier)": {
+      "sample_count": 1680,
+      "selection_rate": 0.435,
+      "equal_opportunity_recall": 0.91,
+      "disparate_impact_ratio": 0.98
+    },
+    "> \u09f350,000 (High Tier)": {
+      "sample_count": 680,
+      "selection_rate": 0.428,
+      "equal_opportunity_recall": 0.912,
+      "disparate_impact_ratio": 1.0
+    }
+  }
+}

@@ -38,9 +38,10 @@ export const AICoach: React.FC = () => {
   const [speechActiveObj, setSpeechActiveObj] = useState<{ stop: () => void } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const daysToCritical = forecast.daysUntilCriticalBalance || profile.daysUntilNextIncome || 6;
   const initialGreeting = lang === 'bn'
-    ? `আসসালামু আলাইকুম ${customer.name}! আমি উপায় এআই আর্থিক সহকারী। আপনার ওয়ালেট ব্যালেন্স, বাজেট শৃঙ্খলা, মাস শেষের নগদ ঘাটতি এড়ানো কিংবা সঞ্চয়ের পরিকল্পনা নিয়ে যেকোনো প্রশ্ন আমাকে জিজ্ঞাসা করতে পারেন।`
-    : `Hello ${customer.name}! I am your upay AI financial assistant. You can ask me anything about your cash flows, budgeting, avoiding liquidity shortfalls, or savings plans!`;
+    ? `আসসালামু আলাইকুম ${customer.name}! আমি আপনার উপায় এআই রেজিলিয়েন্স সহকারী (Google Gemini 2.5 Flash ও অন-ডিভাইস এমএল চালিত)। আপনার বর্তমান ওয়ালেট ব্যালেন্স ${formatMoney(profile.currentBalance)} এবং পরবর্তী বেতন আসতে এখনো ${profile.daysUntilNextIncome} দিন বাকি। আমাদের টাইম-সিরিজ পূর্বাভাস অনুযায়ী আগামী ${daysToCritical} দিনের মধ্যে আপনার তারল্য ঘাটতির ঝুঁকি ${Math.round(risk.probability * 100)}% (${risk.riskLevel === 'HIGH' ? 'উচ্চ' : risk.riskLevel === 'MODERATE' ? 'মাঝারি' : 'নিয়ন্ত্রিত'})। অপ্রয়োজনীয় ক্যাশ-আউট ফি সাশ্রয়, ইউটিলিটি বিল বাফার লক করা কিংবা উৎসবের লাল ভ্যালি সামলানো বিষয়ে আমাকে যেকোনো প্রশ্ন করতে পারেন!`
+    : `Hello ${customer.name}! I am your upay AI Resilience Coach (Powered by Google Gemini 2.5 Flash with on-device ML fallback). Your wallet balance is ${formatMoney(profile.currentBalance)} and next income is expected in ${profile.daysUntilNextIncome} days. Our predictive cash-flow engine projects a ${Math.round(risk.probability * 100)}% (${risk.riskLevel}) liquidity shortage risk within ~${daysToCritical} days. Ask me how to lock your utility bill buffer, avoid costly agent cash-out fees, or absorb upcoming festival expenses!`;
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -48,7 +49,7 @@ export const AICoach: React.FC = () => {
       role: 'assistant',
       text: initialGreeting,
       timestamp: 'এখনই',
-      source: 'upay AI',
+      source: 'Google Gemini 2.5 Flash / On-Device Resilience Engine',
     },
   ]);
 
@@ -59,10 +60,10 @@ export const AICoach: React.FC = () => {
         role: 'assistant',
         text: initialGreeting,
         timestamp: 'এখনই',
-        source: 'upay AI',
+        source: 'Google Gemini 2.5 Flash / On-Device Resilience Engine',
       },
     ]);
-  }, [customer.customer_id, lang]);
+  }, [customer.customer_id, lang, profile.currentBalance, risk.probability]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -183,9 +184,14 @@ export const AICoach: React.FC = () => {
           </div>
 
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] text-[11.5px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-              <span>{lang === 'bn' ? 'উপায় রেজিলিয়েন্স এআই ইঞ্জিন' : 'upay Resilience AI Engine'}</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--yellow-soft)] text-[var(--navy)] text-[11.5px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                <span>{lang === 'bn' ? 'মডেল: Google Gemini 2.5 Flash' : 'Model: Google Gemini 2.5 Flash'}</span>
+              </div>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 font-bold">
+                {lang === 'bn' ? 'অন-ডিভাইস এমএল ফলব্যাক অ্যাক্টিভ' : 'On-Device ML Fallback Active'}
+              </span>
             </div>
             <h2 className="text-[var(--brand-primary)] text-xl font-heading font-extrabold mt-1">
               {lang === 'bn' ? 'উপায় এআই আর্থিক পরামর্শক' : 'upay AI Financial Coach'}

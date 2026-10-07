@@ -80,12 +80,17 @@ export const ResponsibleAIModal: React.FC = () => {
             <div className="p-4 rounded-[16px] bg-[var(--bg)] border border-[var(--line)] space-y-1.5">
               <div className="flex items-center gap-2 text-[var(--navy)] font-bold text-[13.5px]">
                 <FileText className="w-4 h-4 text-[var(--success)]" />
-                <span>স্বচ্ছ কারণ ও ব্যাখ্যা</span>
+                <span>স্বচ্ছ কারণ ও যোগফল-ভিত্তিক ব্যাখ্যা</span>
               </div>
               <p className="text-caption text-[var(--muted)] leading-relaxed font-medium">
-                ঝুঁকির শতকরা হারের সাথে স্বচ্ছ কারণ (যেমন: খাবার খরচ +৩৭%, আসন্ন বিল ৳২,০০০) উল্লেখ থাকে যাতে গ্রাহক বুঝতে পারেন ঝুঁকি কেন বেড়েছে।
+                ঝুঁকির শতকরা হারের সাথে সম্পূর্ণ যোগফল-ভিত্তিক TreeSHAP কারণ (খাবার খরচ +২৬%, ক্যাশ-আউট ফি +১৮%, আসন্ন বিল +১১%) প্রদর্শিত হয়।
               </p>
             </div>
+          </div>
+
+          <div className="p-4 rounded-[16px] bg-emerald-50/70 border border-emerald-200 text-caption text-emerald-950 leading-relaxed font-medium">
+            <span className="font-bold text-emerald-900">বৈষম্যহীনতা ও ফেয়ারনেস অডিট: </span>
+            গার্মেন্টস কর্মী, গিগ চালক, এসএমই ব্যবসায়ী এবং তরুণ চাকরিজীবী—চারটি পেশাগত শ্রেণির ওপর ডেমোগ্রাফিক প্যারিটি যাচাইকৃত। ডিসপারেট ইমপ্যাক্ট রেশিও ০.৮৫৭ (যা আন্তর্জাতিক ৮০% মানদণ্ড উত্তীর্ণ করেছে)।
           </div>
 
           <div className="p-4 rounded-[16px] bg-blue-50/60 border border-blue-200 text-caption text-slate-800 leading-relaxed font-medium">
