@@ -16,19 +16,6 @@
 
 ---
 
-## 🏆 Hackathon Judges' Scorecard & Gap Resolution Matrix
-
-| Hackathon Criterion | Weight | Pre-Audit Score | Current Score | Gap Identified by Audit | Comprehensive Resolution in this Build |
-|---|:---:|:---:|:---:|---|---|
-| **1. Problem Relevance** | 20 | 16 | **20 / 20** | Missing official problem statement template, no source citation for "75% wallet exhaustion", no real user validation. | Added official PDF template, cited BIDS 2024 empirical MFS study ($N=12k$), documented 10 user field discovery interviews. |
-| **2. AI/ML Depth** | 20 | 11 | **20 / 20** | No Python training code in repo, SHAP weights didn't sum to risk score (109% vs 82%), no uplift evaluation. | Created `ml/train_models.py` with LightGBM/XGBoost holdout evaluation, enforced strictly additive TreeSHAP ($22\% + 60\% = 82\%$), added Causal Uplift (T-Learner CATE). |
-| **3. Business/Customer Impact**| 20 | 11 | **20 / 20** | Lack of concrete unit economics, missing KPI targets, simulator numbers inconsistent (82→38% vs 82→64%). | Built full unit economics calculator (৳144.5M annual ecosystem value), 90-day vs 1-yr KPI table, calibrated simulator to exact 82%→38%. |
-| **4. Prototype Quality** | 15 | 12 | **15 / 15** | Forecast screen "6 days" vs Dashboard "9 days" mismatch, generic AI Coach opener, placeholder clone URL. | Dynamically unified deficit countdown across all screens, personalized AI coach to live metrics, fixed clone URL. |
-| **5. Innovation** | 10 | 6 | **10 / 10** | Concept could be generic; needed distinctive hook like festival planner, samity buffer, salary stress test. | Built **Utsob Shield** (Durga Puja, Eid, Pohela Boishakh, School Admission, Qurbani Share Planner), **Samity Buffer**, and **Salary-Delay Stress Test**. |
-| **6. Scalability & Integration**| 10 | 6 | **10 / 10** | No technical integration plan for UCB core banking, Kafka CDC, API contracts, latency, retraining pipeline. | Implemented production REST API contracts (`/api/v1/resilience/score`, etc.), Kafka CDC architecture, <2ms edge latency, retraining protocol. |
-| **7. Responsible AI & Security**| 5 | 4 | **5 / 5** | Missing demographic parity fairness audit across income groups, prompt injection defenses, human oversight. | Conducted 4-cohort Demographic Parity audit (Disparate Impact 0.857 > 0.80 benchmark), implemented prompt injection sanitization. |
-| **TOTAL SCORE** | **100** | **66** | **100 / 100** | Realistic range previously 58–74 | **Target: First Place / Champion Benchmark** |
-
 ---
 
 ## 📌 Table of Contents
